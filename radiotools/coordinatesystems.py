@@ -49,16 +49,19 @@ class cstrafo():
         self.__transformation_matrix_magnetic = np.matrix([e1, e2, e3])
         self.__inverse_transformation_matrix_magnetic = np.linalg.inv(self.__transformation_matrix_magnetic)
 
+#     def __transform(self, positions, matrix):
+#         if(len(positions.shape) == 1):
+#             temp = np.squeeze(np.asarray(np.dot(matrix, positions.T).T))
+#             return temp
+#         else:
+#             result = np.zeros_like(positions)
+#             for i, pos in enumerate(positions):
+#                 temp = np.squeeze(np.asarray(np.dot(matrix, pos)))
+#                 result[i] = temp
+#             return result
+
     def __transform(self, positions, matrix):
-        if(len(positions.shape) == 1):
-            temp = np.squeeze(np.asarray(np.dot(matrix, positions)))
-            return temp
-        else:
-            result = np.zeros_like(positions)
-            for i, pos in enumerate(positions):
-                temp = np.squeeze(np.asarray(np.dot(matrix, pos)))
-                result[i] = temp
-            return result
+        return np.squeeze(np.asarray(np.dot(matrix, positions.T).T))
 
     def transform_from_ground_to_onsky(self, positions):
         return self.__transform(positions, self.__transformation_matrix_onsky)
@@ -68,6 +71,9 @@ class cstrafo():
 
     def transform_from_magnetic_to_geographic(self, positions):
         return self.__transform(positions, self.__transformation_matrix_magnetic)
+
+    def transform_from_magnetic_to_geographic2(self, positions):
+        return self.__transform2(positions, self.__transformation_matrix_magnetic)
 
     def transform_from_geographic_to_magnetic(self, positions):
         return self.__transform(positions, self.__inverse_transformation_matrix_magnetic)

@@ -325,8 +325,8 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
         return nom / denom
 
 
-def is_equal(a, b, precision=1e-4):
-    if (abs(a - b) < precision):
+def is_equal(a, b, rel_precision=1e-5):
+    if ((0.5 * abs(a - b) / (abs(a + b))) < rel_precision):
         return True
     else:
         return False

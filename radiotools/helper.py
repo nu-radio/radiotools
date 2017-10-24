@@ -93,7 +93,7 @@ def get_magnetic_field_vector(site=None):
     get the geomagnetic field vector in Gauss. x points to geographic East and y towards geographic North
     """
     magnetic_fields = {'auger': np.array([0.00871198, 0.19693423, 0.1413841]),
-                       'arianna': np.array([0.00871198, 0.19693423, 0.1413841])}
+                       'arianna': np.array([0.058457, -0.09042, 0.61439])}
     if site is None:
         site = 'auger'
     return magnetic_fields[site]

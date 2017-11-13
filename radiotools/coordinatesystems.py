@@ -28,7 +28,7 @@ class cstrafo():
         self.__transformation_matrix_vBvvB = copy.copy(np.matrix([e1, e2, e3]))
         self.__inverse_transformation_matrix_vBvvB = np.linalg.inv(self.__transformation_matrix_vBvvB)
 
-        # initilize transformation matrix to on-sky coordinate system (etheta, ephi, er)
+        # initilize transformation matrix to on-sky coordinate system (er, etheta, ephi)
         ct = np.cos(zenith)
         st = np.sin(zenith)
         cp = np.cos(azimuth)
@@ -61,12 +61,14 @@ class cstrafo():
 #             return result
 
     def __transform(self, positions, matrix):
-        return np.squeeze(np.asarray(np.dot(matrix, positions.T).T))
+        return np.squeeze(np.asarray(np.dot(matrix, positions)))
 
     def transform_from_ground_to_onsky(self, positions):
+        """ on sky coordinates are eR, eTheta, ePhi """
         return self.__transform(positions, self.__transformation_matrix_onsky)
 
     def transform_from_onsky_to_ground(self, positions):
+        """ on sky coordinates are eR, eTheta, ePhi """
         return self.__transform(positions, self.__inverse_transformation_matrix_onsky)
 
     def transform_from_magnetic_to_geographic(self, positions):

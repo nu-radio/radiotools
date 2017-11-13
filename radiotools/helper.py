@@ -326,11 +326,19 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
 
 
 def is_equal(a, b, rel_precision=1e-5):
-    if ((0.5 * abs(a - b) / (abs(a + b))) < rel_precision):
-        return True
+    if (a+b) != 0:
+        if ((0.5 * abs(a - b) / (abs(a + b))) < rel_precision):
+            return True
+        else:
+            return False
     else:
-        return False
-
+        if a == 0:
+            return True
+        else:
+            if ((0.5 * abs(a - b) / (abs(a) + abs(b))) < rel_precision):
+                return True
+            else:
+                return False
 
 def has_same_direction(zenith1, azimuth1, zenith2, azimuth2, distancecut=20):
     distancecut = np.deg2rad(distancecut)

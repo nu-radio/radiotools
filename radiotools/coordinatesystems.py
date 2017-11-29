@@ -83,19 +83,21 @@ class cstrafo():
     def transform_to_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple
         station positions into vxB, vxvxB shower plane """
-        if(core is not None):
-            station_position = np.array(copy.deepcopy(station_position))
-        if(len(station_position.shape) == 1):
-            if(core is not None):
-                station_position -= core
-            return np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, station_position)))
+        if(core is None):
+            return self.__transform(station_position, self.__transformation_matrix_vBvvB)
         else:
-            result = []
-            for pos in station_position:
+            station_position = np.array(copy.deepcopy(station_position))
+            if(len(station_position.shape) == 1):
                 if(core is not None):
-                    pos -= core
-                result.append(np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, pos))))
-            return np.array(result)
+                    station_position -= core
+                return np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, station_position)))
+            else:
+                result = []
+                for pos in station_position:
+                    if(core is not None):
+                        pos -= core
+                    result.append(np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, pos))))
+                return np.array(result)
 
     def transform_from_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple

@@ -129,7 +129,6 @@ def get_lorentzforce_vector(zenith, azimuth, magnetic_field_vector=None):
         magnetic_field_vector = get_magnetic_field_vector()
     showerAxis = spherical_to_cartesian(zenith, azimuth)
     magnetic_field_vector_normalized = magnetic_field_vector / np.linalg.norm(magnetic_field_vector)
-    print magnetic_field_vector_normalized
     return np.cross(showerAxis, magnetic_field_vector_normalized)
 
 
@@ -340,6 +339,7 @@ def is_equal(a, b, rel_precision=1e-5):
             else:
                 return False
 
+
 def has_same_direction(zenith1, azimuth1, zenith2, azimuth2, distancecut=20):
     distancecut = np.deg2rad(distancecut)
     axis1 = spherical_to_cartesian(zenith1, azimuth1)
@@ -355,7 +355,8 @@ def has_same_direction(zenith1, azimuth1, zenith2, azimuth2, distancecut=20):
 def get_cherenkov_angle(h, model=1):
     """ returns the cherenkov angle for the density at height above ground
         assuming that the particle speed is the speed of light """
-    return np.arccos(1. / (get_n(h, model=model)))
+    from atmosphere import models as atm
+    return np.arccos(1. / (atm.get_n(h, model=model)))
 
 
 def get_cherenkov_ellipse(zenith, xmax, model=1):

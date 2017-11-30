@@ -11,9 +11,24 @@ import helper as hp
 
 class cstrafo():
 
-    """ class to performe coordinate transformations """
+    """ class to performe coordinate transformations typically used in air shower radio detection
+    the following transformations are implemented:
+    From the cartesian ground coordinate system (x:East, y:North, z:up) to
+    - to the vxB-vx(vxB) system
+    - to the on-sky coordinate system (spherical coordinates eR, eTheta, ePhi)
+    - to a ground coordinate system wher ethe y-axis is oriented to magnetic North (instead of geographic North)
+    and vice versa.
+     """
 
     def __init__(self, zenith, azimuth, magnetic_field_vector=None, site=None):
+        """
+        the zenith and azimuth angles are the incoming signal direction according
+        to the default coordinate system of the radiotools package (the Auger coordinate system).
+        E.g. azimuth = 270deg indicates a signal that is coming in from the South, i.e., is moving northwards.
+             azimuth = 0deg indicates a signal that is coming in from the East, i.e., is moving westwards.
+             zenith = 0deg indicates a singnal that is coming from the zenith
+             zenith = 90deg indicates a singnal that is coming from the horizon
+        """
         showeraxis = -1 * hp.spherical_to_cartesian(zenith, azimuth)  # -1 is because shower is propagating towards us
         if(magnetic_field_vector is None):
             magnetic_field_vector = hp.get_magnetic_field_vector(site=site)

@@ -15,21 +15,34 @@ class cstrafo():
 
     the following transformations are implemented:
 
-    From the cartesian ground coordinate system (x:East, y:North, z:up) to
+    From the cartesian ground coordinate system (x: East, y: North, z: up) to
      * to the vxB-vx(vxB) system
      * to the on-sky coordinate system (spherical coordinates eR, eTheta, ePhi)
-     * to a ground coordinate system wher ethe y-axis is oriented to magnetic North (instead of geographic North)
+     * to a ground coordinate system where the y-axis is oriented to magnetic North (instead of geographic North)
+
     and vice versa.
     """
 
     def __init__(self, zenith, azimuth, magnetic_field_vector=None, site=None):
-        """
-        the zenith and azimuth angles are the incoming signal direction according
-        to the default coordinate system of the radiotools package (the Auger coordinate system).
-        E.g. azimuth = 270deg indicates a signal that is coming in from the South, i.e., is moving northwards.
-             azimuth = 0deg indicates a signal that is coming in from the East, i.e., is moving westwards.
-             zenith = 0deg indicates a singnal that is coming from the zenith
-             zenith = 90deg indicates a singnal that is coming from the horizon
+        """ Initialization with signal/air-shower direction and magnetic field configuration.
+
+        All parameters should be specified according to the default coordinate
+        system of the radiotools package (the Auger coordinate system).
+
+        Parameters
+        ----------
+        zenith : float
+            zenith angle of the incoming signal/air-shower direction (0 deg is pointing to the zenith)
+        azimuth : float
+            azimuth angle of the incoming signal/air-shower direction (0 deg is North, 90 deg is South)
+        magnetic_field_vector (optional): 3-vector, default None
+            the magnetic field vector in the cartesian ground coordinate system,
+            if no magnetic field vector is specified, the default value for the
+            site specified in the 'site' function argument is used.
+        site (optional): string, default 'Auger'
+            this argument has only effect it 'magnetic_field_vector' is None
+            the site for which the magnetic field vector should be used. Currently, default
+            values for for the sites 'auger' and 'arianna' are available
         """
         showeraxis = -1 * hp.spherical_to_cartesian(zenith, azimuth)  # -1 is because shower is propagating towards us
         if(magnetic_field_vector is None):
@@ -99,15 +112,15 @@ class cstrafo():
 
     def transform_to_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple
-        station positions into vxB, vxvxB shower plane 
+        station positions into vxB, vxvxB shower plane
 
         This function is supposed to transform time traces with the shape
         (number of polarizations, length of trace) and a list of station positions
         with the shape of (length of list, 3). The function automatically differentiates
         between the two cases by checking the length of the second dimension. If
-        this dimension is '3', a list of station positions is assumed to be the input. 
+        this dimension is '3', a list of station positions is assumed to be the input.
         Note: this logic will fail if a trace will have a shape of (3, 3), which is however
-        unlikely to happen. 
+        unlikely to happen.
 
         """
         nX, nY = station_position.shape
@@ -131,7 +144,16 @@ class cstrafo():
 
     def transform_from_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple
-        station positions back to x,y,z CS """
+        station positions back to x,y,z CS
+
+        This function is supposed to transform time traces with the shape
+        (number of polarizations, length of trace) and a list of station positions
+        with the shape of (length of list, 3). The function automatically differentiates
+        between the two cases by checking the length of the second dimension. If
+        this dimension is '3', a list of station positions is assumed to be the input.
+        Note: this logic will fail if a trace will have a shape of (3, 3), which is however
+        unlikely to happen.
+        """
         nX, nY = station_position.shape
         if(nY == 3):
             core = np.array([0, 0, 0])

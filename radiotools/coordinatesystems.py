@@ -12,13 +12,15 @@ import helper as hp
 class cstrafo():
 
     """ class to performe coordinate transformations typically used in air shower radio detection
+
     the following transformations are implemented:
+
     From the cartesian ground coordinate system (x:East, y:North, z:up) to
-    - to the vxB-vx(vxB) system
-    - to the on-sky coordinate system (spherical coordinates eR, eTheta, ePhi)
-    - to a ground coordinate system wher ethe y-axis is oriented to magnetic North (instead of geographic North)
+     * to the vxB-vx(vxB) system
+     * to the on-sky coordinate system (spherical coordinates eR, eTheta, ePhi)
+     * to a ground coordinate system wher ethe y-axis is oriented to magnetic North (instead of geographic North)
     and vice versa.
-     """
+    """
 
     def __init__(self, zenith, azimuth, magnetic_field_vector=None, site=None):
         """
@@ -97,7 +99,20 @@ class cstrafo():
 
     def transform_to_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple
-        station positions into vxB, vxvxB shower plane """
+        station positions into vxB, vxvxB shower plane 
+
+        This function is supposed to transform time traces with the shape
+        (number of polarizations, length of trace) and a list of station positions
+        with the shape of (length of list, 3). The function automatically differentiates
+        between the two cases by checking the length of the second dimension. If
+        this dimension is '3', a list of station positions is assumed to be the input. 
+        Note: this logic will fail if a trace will have a shape of (3, 3), which is however
+        unlikely to happen. 
+
+        """
+        nX, nY = station_position.shape
+        if(nY == 3):
+            core = np.array([0, 0, 0])
         if(core is None):
             return self.__transform(station_position, self.__transformation_matrix_vBvvB)
         else:
@@ -117,6 +132,9 @@ class cstrafo():
     def transform_from_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple
         station positions back to x,y,z CS """
+        nX, nY = station_position.shape
+        if(nY == 3):
+            core = np.array([0, 0, 0])
         if(core is not None):
             station_position = copy.deepcopy(station_position)
         if(len(station_position.shape) == 1):

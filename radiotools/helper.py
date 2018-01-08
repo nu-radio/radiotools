@@ -4,7 +4,40 @@
 import numpy as np
 
 
+def linear_to_dB(linear):
+    """ conversion to decibel scale
+
+    Parameters
+    ------------
+    linear : float
+        quantity in linear units
+
+    Returns
+    --------
+    dB : float
+        quantity in dB units
+    """
+    return 10 * np.log10(linear)
+
+
+def dB_to_linear(dB):
+    """ conversion from decibel scale to linear scale
+
+    Parameters
+    ------------
+    dB : float
+        quantity in dB units
+
+    Returns
+    --------
+    linear : float
+        quantity in linear units
+    """
+    return 10 ** (dB / 10.)
+
+
 def gps_to_datetime(gps):
+    """ conversion between GPS seconds and a python datetime object (taking into account leap seconds) """
     from radiotools import leapseconds
     from datetime import datetime, timedelta
     return leapseconds.gps_to_utc(datetime(1980, 1, 6) + timedelta(seconds=gps))
@@ -325,7 +358,7 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
 
 
 def is_equal(a, b, rel_precision=1e-5):
-    if (a+b) != 0:
+    if (a + b) != 0:
         if ((0.5 * abs(a - b) / (abs(a + b))) < rel_precision):
             return True
         else:
@@ -419,14 +452,14 @@ def is_confined_weak(x, y, station_positions, delta_confinement=0):
 
 
 def in_hull(p, hull):
-    """
-    Test if points in `p` are in `hull`
-
-    `p` should be a `NxK` coordinates of `N` points in `K` dimensions
-    `hull` is either a scipy.spatial.Delaunay object or the `MxK` array of the
-    coordinates of `M` points in `K`dimensions for which Delaunay triangulation
-    will be computed
-    """
+#     """
+#     Test if points in `p` are in `hull`
+#
+#     `p` should be a `NxK` coordinates of `N` points in `K` dimensions
+#     `hull` is either a scipy.spatial.Delaunay object or the `MxK` array of the
+#     coordinates of `M` points in `K`dimensions for which Delaunay triangulation
+#     will be computed
+#     """
     from scipy.spatial import Delaunay
     if not isinstance(hull, Delaunay):
         hull = Delaunay(hull)

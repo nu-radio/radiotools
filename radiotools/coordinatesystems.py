@@ -124,9 +124,7 @@ class cstrafo():
 
         """
         nX, nY = station_position.shape
-        if(nY == 3):
-            core = np.array([0, 0, 0])
-        if(core is None):
+        if(nY != 3):
             return self.__transform(station_position, self.__transformation_matrix_vBvvB)
         else:
             station_position = np.array(copy.deepcopy(station_position))
@@ -155,8 +153,8 @@ class cstrafo():
         unlikely to happen.
         """
         nX, nY = station_position.shape
-        if(nY == 3):
-            core = np.array([0, 0, 0])
+        if(nY != 3):
+            return self.__transform(station_position, self.__inverse_transformation_matrix_vBvvB)
         if(core is not None):
             station_position = copy.deepcopy(station_position)
         if(len(station_position.shape) == 1):

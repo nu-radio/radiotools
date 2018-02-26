@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function  # , unicode_literals
 import numpy as np
 import os
 import pickle
@@ -264,7 +265,7 @@ class Atmosphere():
 
     def __init__(self, model=17, n_taylor=5, curved=True, zenith_numeric=np.deg2rad(83)):
         import sys
-        print "model is ", model
+        print("model is ", model)
         self.model = model
         self.curved = curved
         self.n_taylor = n_taylor
@@ -277,15 +278,15 @@ class Atmosphere():
         if curved:
             folder = os.path.dirname(os.path.abspath(__file__))
             filename = os.path.join(folder, "constants_%02i_%i.picke" % (self.model, n_taylor))
-            print "searching constants at ", filename
+            print("searching constants at ", filename)
             if os.path.exists(filename):
-                print "reading constants from ", filename
+                print("reading constants from ", filename)
                 fin = open(filename, "r")
                 self.a, self.d = pickle.load(fin)
                 fin.close()
                 if(len(self.a) != self.number_of_zeniths):
                     os.remove(filename)
-                    print "constants outdated, please rerun to calculate new constants"
+                    print("constants outdated, please rerun to calculate new constants")
                     sys.exit(0)
                 self.a_funcs = []
                 zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
@@ -300,7 +301,7 @@ class Atmosphere():
                 fin = open(filename, "w")
                 pickle.dump([self.a, self.d], fin)
                 fin.close()
-                print "all constants calculated, exiting now... please rerun your analysis"
+                print("all constants calculated, exiting now... please rerun your analysis")
                 sys.exit(0)
 
     def __calculate_a(self,):
@@ -309,9 +310,9 @@ class Atmosphere():
         self.curved = True
         self.__zenith_numeric = 0
         for iZ, z in enumerate(zeniths):
-            print "calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor)
+            print("calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor))
             a[iZ] = self.__get_a(z)
-            print "\t... a  = ", a[iZ], " iZ = ", iZ
+            print("\t... a  = ", a[iZ], " iZ = ", iZ)
         return a
 
     def __get_a(self, zenith):
@@ -367,7 +368,7 @@ class Atmosphere():
                 tmp2 = -1. / 16. * st ** 2 * (ct ** 4 - 14 * ct ** 2 + 21) * (h / r_e) ** 5 / ct ** 11
                 dldh += tmp2
         else:
-            print "ERROR, height index our of bounds"
+            print("ERROR, height index our of bounds")
             import sys
             sys.exit(-1)
 
@@ -549,7 +550,7 @@ class Atmosphere():
 #             t_h_low = h_low[i]
 #             t_h_up = h_up[i]
             if t_h_up <= t_h_low:
-                print "WARNING _get_atmosphere_numeric(): upper limit less than lower limit"
+                print("WARNING _get_atmosphere_numeric(): upper limit less than lower limit")
                 return np.nan
             if t_h_up == np.infty:
                 t_h_up = h_max
@@ -636,12 +637,12 @@ class Atmosphere():
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
         tmp = np.zeros_like(zenith)
         if np.sum(mask_numeric):
-            print "get vertical height numeric", zenith
+            print("get vertical height numeric", zenith)
             tmp[mask_numeric] = self._get_vertical_height_numeric(*self.__get_arguments(mask_numeric, zenith, X))
         if np.sum(mask_taylor):
             tmp[mask_taylor] = self._get_vertical_height_numeric_taylor(*self.__get_arguments(mask_taylor, zenith, X))
         if np.sum(mask_flat):
-            print "get vertical height flat"
+            print("get vertical height flat")
             tmp[mask_flat] = self._get_vertical_height_flat(*self.__get_arguments(mask_flat, zenith, X))
         return tmp
 
@@ -652,7 +653,7 @@ class Atmosphere():
         self.__zenith_numeric = 0
         for iZ, z in enumerate(zeniths):
             z = np.array([z])
-            print "calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor)
+            print("calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor))
             d[iZ][0] = 0
             X1 = self._get_atmosphere(z, self.h[1])
             d[iZ][1] = self._get_vertical_height_numeric(z, X1) - self._get_vertical_height_taylor_wo_constants(z, X1)
@@ -660,7 +661,7 @@ class Atmosphere():
             d[iZ][2] = self._get_vertical_height_numeric(z, X2) - self._get_vertical_height_taylor_wo_constants(z, X2)
             X3 = self._get_atmosphere(z, self.h[3])
             d[iZ][3] = self._get_vertical_height_numeric(z, X3) - self._get_vertical_height_taylor_wo_constants(z, X3)
-            print "\t... d  = ", d[iZ], " iZ = ", iZ
+            print("\t... d  = ", d[iZ], " iZ = ", iZ)
         return d
 
     def _get_vertical_height_taylor(self, zenith, X):
@@ -703,11 +704,11 @@ class Atmosphere():
                     if self.n_taylor >= 6:
                         tmp[mask] += -1. / (720. * r_e ** 5 * b[iX] ** 6) * c[iX] * (ct[mask] ** 6 * (945 * c[iX] ** 5 - 2205 * c[iX] ** 4 * r_e + 2380 * c[iX] ** 3 * r_e ** 2 - 1526 * c[iX] ** 2 * r_e ** 3 + 600 * c[iX] * r_e ** 4 - 120 * r_e ** 5) + ct[mask] ** 4 * (-1575 * c[iX] ** 5 + 3528 * c[iX] ** 4 * r_e - 3600 * c[iX] ** 3 * r_e ** 2 + 2074 * c[iX] ** 2 * r_e ** 3 - 600 * c[iX] * r_e ** 4) + ct[mask] ** 2 * (675 * c[iX] ** 5 - 1401 * c[iX] ** 4 * r_e - 1272 * c[iX] ** 3 * r_e ** 2 - 548 * c[iX] ** 2 * r_e ** 3) - 45 * c[iX] ** 5 + 78 * c[iX] ** 4 * r_e - 52 * c[iX] ** 3 * r_e ** 2) * xx ** 6
                 elif iX == 4:
-                    print "iX == 4", iX
+                    print("iX == 4", iX)
                     # numeric fallback
                     tmp[mask] = self._get_vertical_height_numeric(zenith, X)
                 else:
-                    print "iX > 4", iX
+                    print("iX > 4", iX)
                     tmp[mask] = np.ones_like(mask) * h_max
         return tmp
 

@@ -1,8 +1,8 @@
 import os
 import stat
 import numpy as np
-from radiotools import CSTransformation
-from radiotools import HelperFunctions as hp
+from radiotools import coordinatesystems
+from radiotools import helper as hp
 
 
 # $_CONDOR_SCRATCH_DIR
@@ -194,7 +194,7 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
 
     fout = open(filename, 'a')
     B = np.array([0, np.cos(inc), -np.sin(inc)])
-    cs = CSTransformation.CSTransformation(zen, az, magnetic_field=B)
+    cs = coordinatesystems.cstrafo(zen, az, magnetic_field=B)
     observation_plane_string = "gp"
     if not ground_plane:
         observation_plane_string = "sp"
@@ -206,7 +206,7 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
         rs = np.append(0, rs)
     for i in np.arange(1, n_rings + 1):
         for j in np.arange(len(azimuths)):
-            station_position = rs[i] * hp.SphericalToCartesian(np.pi * 0.5, azimuths[j])
+            station_position = rs[i] * hp.spherical_to_cartesian(np.pi * 0.5, azimuths[j])
             # name = "pos_%i_%i" % (rs[i], np.rad2deg(azimuths[j]))
             name = "pos_%i_%i_%.0f_%s" % (rs[i], np.rad2deg(azimuths[j]), obs_level, observation_plane_string)
             if(ground_plane):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function  # , unicode_literals
 
 import numpy as np
 
@@ -349,9 +350,9 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
     if sigma:
         from scipy.stats import chi2, norm
         # p = norm.cdf(i) - norm.cdf(-i)
-        print "p = ", nom, denom, nom / denom, "sigma =", chi2.ppf(nom / denom, 1)
-        print "p = ", p
-        print norm.ppf(nom / denom)
+        print("p = ", nom, denom, nom / denom, "sigma =", chi2.ppf(nom / denom, 1))
+        print("p = ", p)
+        print(norm.ppf(nom / denom))
         return chi2.ppf(nom / denom, 1)
     else:
         return nom / denom
@@ -632,7 +633,7 @@ if __name__ == "__main__":
     # distances = np.array([np.min(np.linalg.norm(c - positions, axis=-1)) for c in cores])
     near_AERA_mask = hp.is_confined2(cores[..., 0], cores[..., 1], positions, delta_confinement=150)
     c = hp.is_confined2(cores[near_AERA_mask][..., 0], cores[near_AERA_mask][..., 1], positions, delta_confinement=0)
-    print 100. *np.sum(c) / len(c)
+    print(100. *np.sum(c) / len(c))
     import matplotlib.pyplot as plt
     plt.scatter(cores[near_AERA_mask][..., 0], cores[near_AERA_mask][..., 1])
     plt.scatter(cores[near_AERA_mask][c][..., 0], cores[near_AERA_mask][c][..., 1])

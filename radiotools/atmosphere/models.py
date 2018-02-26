@@ -23,6 +23,12 @@ atm_models = {  # US standard after Linsley
                   'c': 1e-2 * np.array([994186.38, 878153.55, 636143.04, 772170.16, 1.e9]),
                   'h': 1e3 * np.array([4., 10., 40., 100.])
                   },
+              # southpole January after Lipari
+              15: {'a': 1e4 * np.array([-113.139, -79.0635, -54.3888, 0., 0.00421033]),
+                   'b': 1e4 * np.array([1133.1, 1101.2, 1085., 1098., 1.]),
+                   'c': 1e-2 * np.array([861730., 826340., 790950., 682800., 2.6798156e9]),
+                   'h': 1e3 * np.array([2.67, 5.33, 8., 100.])
+                  },
               # US standard after Keilhauer
               17: {'a': 1e4 * np.array([-149.801663, -57.932486, 0.63631894, 4.35453690e-4, 0.01128292]),
                    'b': 1e4 * np.array([1183.6071, 1143.0425, 1322.9748, 655.67307, 1.]),
@@ -811,8 +817,6 @@ class Atmosphere():
 #         height = _get_vertical_height(_get_atmosphere(0, model=self.model) - dxmax * np.cos(self.zenith))
 #         return height / np.cos(self.zenith)
 
-
-
 # def get_distance_xmax_geometric2(xmax, zenith, observation_level=1564.,
 #                                 model=1, curved=False):
 #     """ input:
@@ -856,6 +860,7 @@ class Atmosphere():
 # =============================================================================
 # setting up test suite
 # =============================================================================
+
 
 class TestAtmosphericFunctions(unittest.TestCase):
 
@@ -1020,7 +1025,6 @@ class TestAtmosphericFunctions(unittest.TestCase):
             # print "zenith = ", np.rad2deg(zeniths[i])
             self.assertAlmostEqual(atm1[i], atm2[i], delta=2e-5 * atm1[i])
 
-
 #
 #     def test_atmosphere_above_height_for_flat_atm(self):
 #         curved = False
@@ -1139,7 +1143,6 @@ class TestAtmosphericFunctions(unittest.TestCase):
 #                     dxmax2 = catm.get_distance_xmax_geometric(xmax, observation_level=obs)
 #                     # print "zenith %.0f xmax = %.2g, obslevel = %.3g, %.5g, %.5g %.2g" % (np.rad2deg(zenith), xmax, obs, dxmax1, dxmax2, 3 + np.abs(dxmax1 * allowed_discrepancy(zenith)))
 #                     self.assertAlmostEqual(dxmax1, dxmax2, delta=3. + np.abs(dxmax1 * allowed_discrepancy(zenith)))
-
 
 #     def test_get_distance_to_xmax_geometric_flat_vs_curved2(self):
 #
@@ -1284,7 +1287,6 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
-
     a = 1 / 0
     from scipy import integrate
     dd = np.linspace(0, 5000, 50) * 1e3
@@ -1296,10 +1298,13 @@ if __name__ == "__main__":
 
         def tmp1(x):
             return get_density(x * 1e-2 * np.cos(z))
+
         atmabove = [integrate.quad(tmp1, 0, t)[0] for t in dd * 1e2]
         ax[1].plot(dd, atmabove, "%s-" % colors[i], label="%.0f" % np.rad2deg(z))
+
         def tmp(x):
             return _get_density4(x * 1e-2, z)
+
         atmabove = [integrate.quad(tmp, 0, t)[0] for t in dd * 1e2]
         ax[1].plot(dd, atmabove, "%s--" % colors[i], label="%.0f" % np.rad2deg(z))
     ax[0].legend()
@@ -1310,7 +1315,4 @@ if __name__ == "__main__":
     ax[1].legend()
     plt.tight_layout()
     plt.show()
-
-
-
 

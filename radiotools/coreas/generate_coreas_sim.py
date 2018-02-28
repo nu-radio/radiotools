@@ -32,6 +32,7 @@ def write_sh_geninponly(filename, output_dir, run_dir, corsika_executable,
 def write_sh(filename, output_dir, run_dir, corsika_executable,
              seed, particle_type, event_number, energy, zenith, azimuth,
              tmp_dir="/tmp", radiotools_path="",
+             hdf5converter="",
              atm=1, conex=False, obs_level=1564.,
              flupro="", flufor="gfortran",
              pre_executionscript_filename=None,
@@ -86,7 +87,8 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
 #     fout.write('\trm *flout*\n')
 #     fout.write('\trm *flerr*\n')
 #    fout.write('\ttar --remove-files -cf DAT$RUNNR.tar DAT$RUNNR-*.lst\n')
-    fout.write('\tmkdir {0}\n'.format(os.path.join(output_dir, "../pickle")))
+#     fout.write('\tmkdir {0}\n'.format(os.path.join(output_dir, "../pickle")))
+    fout.write('\tmkdir {0}\n'.format(os.path.join(output_dir, "../hdf5")))
     fout.write('\texport PYTHONPATH={0}:$PYTHONPATH\n'.format(radiotools_path))
     executable = os.path.join(radiotools_path, "radiotools", "coreas", "pickle_sim_to_class.py")
     particle_identifier = "xx"
@@ -94,7 +96,8 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
         particle_identifier = "p"
     if (int(particle_type) == 5626):
         particle_identifier = "Fe"
-    fout.write('\tpython {0} -s -d $RUNNR -o {1} --particle-type {2}\n'.format(executable, os.path.join(output_dir, "../pickle"), particle_identifier))
+#     fout.write('\tpython {0} -s -d $RUNNR -o {1} --particle-type {2}\n'.format(executable, os.path.join(output_dir, "../pickle"), particle_identifier))
+    fout.write('\tpython {} $RUNNR/SIM$RUNNR.reas -o {outputdir} \n'.format(hdf5converter, outputdir=os.path.join(output_dir, "../hdf5")))
     if(parallel):
         # merge particle outputs in case of MPI simulation
         executable = os.path.join(os.path.dirname(corsika_executable), "..", "coast/CorsikaFileIO", "merge_corsika")
@@ -106,8 +109,9 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
         fout.write('\t\tfi\n')
         fout.write('\tfi\n')
         fout.write('\tmv \"$RUNNR\"/DAT\"$RUNNR\"-999999999.long \"$RUNNR\"/DAT\"$RUNNR\".long\n')
-    fout.write('\ttar -C $RUNNR --remove-files -czf $RUNNR.tar.gz .\n')
-    fout.write('\tmv $RUNNR.tar.gz {0}/\n'.format(output_dir))
+#     fout.write('\ttar -C $RUNNR --remove-files -czf $RUNNR.tar.gz .\n')
+#     fout.write('\tmv $RUNNR.tar.gz {0}/\n'.format(output_dir))
+    fout.write('\tmv $RUNNR {0}/\n'.format(output_dir))
     fout.write('\techo "CoREAS output pickleld and zipped and copied to final destination on $(date)"\n')
     # fout.write('\tcd {0}\n'.format(output_dir))
     fout.write('else\n')
@@ -195,7 +199,7 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
 
     fout = open(filename, 'a')
     B = np.array([0, np.cos(inc), -np.sin(inc)])
-    cs = coordinatesystems.cstrafo(zen, az, magnetic_field=B)
+    cs = coordinatesystems.cstrafo(zen, az, magnetic_field_vector=B)
     observation_plane_string = "gp"
     if not ground_plane:
         observation_plane_string = "sp"

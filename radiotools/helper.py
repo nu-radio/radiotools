@@ -88,6 +88,18 @@ def cartesian_to_spherical(x, y, z):
     return theta, phi
 
 
+def cartesian_to_spherical_vectorized(x, y, z):
+    # normlize vector
+    norm = (x ** 2 + y ** 2 + z ** 2) ** 0.5
+    x2 = x / norm
+    y2 = y / norm
+    z2 = z / norm
+    theta = np.zeros_like(x)
+    theta[z2 < 1] = np.arccos(z2[z2 < 1])
+    phi = np.arctan2(y2, x2)
+    return theta, phi
+
+
 def get_angle(v1, v2):
     arccos = np.dot(v1, v2) / (np.linalg.norm(v1.T, axis=0) * np.linalg.norm(v2.T, axis=0))
     # catch numerical overlow
@@ -127,7 +139,8 @@ def get_magnetic_field_vector(site=None):
     get the geomagnetic field vector in Gauss. x points to geographic East and y towards geographic North
     """
     magnetic_fields = {'auger': np.array([0.00871198, 0.19693423, 0.1413841]),
-                       'arianna': np.array([0.058457, -0.09042, 0.61439])}
+                       'mooresbay': np.array([0.058457, -0.09042, 0.61439]),
+                       'southpole': np.array([-0.14390398, 0.08590658, 0.52081228])}  # position of SP arianna station
     if site is None:
         site = 'auger'
     return magnetic_fields[site]
@@ -611,8 +624,16 @@ def covariance_to_correlation(M):
     Dinv = np.linalg.inv(D)
     return np.dot(Dinv, np.dot(M, Dinv))
 
+
+def get_normalized_xcorr(trace1, trace2):
+    from scipy.signal import correlate
+    return correlate(trace1, trace2, mode='full', method='auto') / (np.sum(trace1 ** 2) * np.sum(trace2 ** 2)) ** 0.5
+
+
 # Test Code:
 if __name__ == "__main__":
+
+
     import radiotools.HelperFunctions as hp
     n = 10000
     from radiotools.AERA import coordinates, signal_prediction

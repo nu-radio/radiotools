@@ -281,7 +281,7 @@ class Atmosphere():
             print("searching constants at ", filename)
             if os.path.exists(filename):
                 print("reading constants from ", filename)
-                fin = open(filename, "r")
+                fin = open(filename, "rb")
                 self.a, self.d = pickle.load(fin)
                 fin.close()
                 if(len(self.a) != self.number_of_zeniths):

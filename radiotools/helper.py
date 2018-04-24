@@ -171,11 +171,16 @@ def get_magneticfield_zenith(magnetic_field_inclination):
         return np.deg2rad(90) - magnetic_field_inclination
 
 
+def get_magnetic_field_vector_from_inc(inclination, declination):
+    return spherical_to_cartesian(get_magneticfield_zenith(inclination),
+                                  get_magneticfield_azimuth(declination))
+
+
 def get_lorentzforce_vector(zenith, azimuth, magnetic_field_vector=None):
     if (magnetic_field_vector is None):
         magnetic_field_vector = get_magnetic_field_vector()
     showerAxis = spherical_to_cartesian(zenith, azimuth)
-    magnetic_field_vector_normalized = magnetic_field_vector / np.linalg.norm(magnetic_field_vector)
+    magnetic_field_vector_normalized = magnetic_field_vector / np.linalg.norm(magnetic_field_vector.T, axis=0)
     return np.cross(showerAxis, magnetic_field_vector_normalized)
 
 
@@ -635,6 +640,8 @@ if __name__ == "__main__":
 
 
     import radiotools.HelperFunctions as hp
+
+
     n = 10000
     from radiotools.AERA import coordinates, signal_prediction
     stations = coordinates.get_stations_CRS()

@@ -272,7 +272,7 @@ class Atmosphere():
         self.__zenith_numeric = zenith_numeric
         self.b = atm_models[model]['b']
         self.c = atm_models[model]['c']
-        self.number_of_zeniths = 101
+        self.number_of_zeniths = 201
         hh = atm_models[model]['h']
         self.h = np.append([0], hh)
         if curved:
@@ -291,7 +291,7 @@ class Atmosphere():
                 self.a_funcs = []
                 zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
                 from scipy.interpolate import interp1d
-                mask = zeniths < np.deg2rad(83)
+                mask = zeniths < np.deg2rad(90)
                 for i in xrange(5):
                     self.a_funcs.append(interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic'))
             else:

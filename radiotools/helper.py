@@ -115,17 +115,14 @@ def get_angle(v1, v2):
     return np.arccos(arccos)
 
 
-def get_normalized_angle(angle, degree=False):
+def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
     if degree:
-        while (angle > 180.):
-            angle -= 360.
-        while (angle < -180):
-            angle += 360.
-    else:
-        while (angle > np.pi):
-            angle -= 2. * np.pi
-        while (angle < -np.pi):
-            angle += 2. * np.pi
+        interval = np.rad2deg(interval)
+    delta = interval[1] - interval[0]
+    while (angle >= interval[1]):
+        angle -= delta
+    while (angle < interval[0]):
+        angle += delta
     return angle
 
 
@@ -151,11 +148,11 @@ def get_magnetic_field_vector(site=None):
 #     vec *= 0.242587
 
 
-def get_angle_to_magnetic_field_vector(zenith, azimuth):
+def get_angle_to_magnetic_field_vector(zenith, azimuth, site=None):
     """
         returns the angle between shower axis and magnetic field
     """
-    magnetic_field = get_magnetic_field_vector()
+    magnetic_field = get_magnetic_field_vector(site=site)
     v = spherical_to_cartesian(zenith, azimuth)
     return get_angle(magnetic_field, v)
 
@@ -180,7 +177,7 @@ def get_lorentzforce_vector(zenith, azimuth, magnetic_field_vector=None):
     if (magnetic_field_vector is None):
         magnetic_field_vector = get_magnetic_field_vector()
     showerAxis = spherical_to_cartesian(zenith, azimuth)
-    magnetic_field_vector_normalized = magnetic_field_vector / np.linalg.norm(magnetic_field_vector.T, axis=0)
+    magnetic_field_vector_normalized = magnetic_field_vector / np.linalg.norm(magnetic_field_vector.T, axis=0, keepdims=True).T
     return np.cross(showerAxis, magnetic_field_vector_normalized)
 
 
@@ -218,17 +215,8 @@ def get_polarization_vector_max(trace):
     return pol
 
 
-def get_interval_hilbert(trace, scale=0.5):
-    from scipy.signal import hilbert
-
-    d = len(trace.shape)
-    if (d == 1):
-        h = np.abs(hilbert(trace))
-    elif (d == 2):
-        h = np.sqrt(np.sum(np.abs(hilbert(trace)) ** 2, axis=0))
-    else:
-        print("ERROR, trace has not the correct dimension")
-        raise
+def get_interval(trace, scale=0.5):
+    h = np.abs(trace)
     max_pos = h.argmax()
     n_samples = trace.T.shape[0]
     h_max = h.max()
@@ -243,6 +231,20 @@ def get_interval_hilbert(trace, scale=0.5):
             low_pos = i
             break
     return low_pos, up_pos
+
+
+def get_interval_hilbert(trace, scale=0.5):
+    from scipy.signal import hilbert
+
+    d = len(trace.shape)
+    if (d == 1):
+        h = np.abs(hilbert(trace))
+    elif (d == 2):
+        h = np.sqrt(np.sum(np.abs(hilbert(trace)) ** 2, axis=0))
+    else:
+        print("ERROR, trace has not the correct dimension")
+        raise
+    return get_interval(h, scale)
 
 
 def get_FWHM_hilbert(trace):

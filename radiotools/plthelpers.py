@@ -1,6 +1,7 @@
 import inspect, re
 import math
 import os
+from matplotlib import colors as mcolors
 
 from scipy import optimize
 
@@ -8,17 +9,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def discrete_cmap(N, base_cmap=None):
-    """Create an N-bin discrete colormap from the specified input map"""
+def get_discrete_cmap(N, base_cmap='viridis'):
+    cmap = plt.get_cmap(base_cmap, N)
+    colors = []
+    N = np.int(N)
+    for i in range(N):
+        if(i % 2 == 0):
+            colors.append(cmap.colors[i // 2])
+        else:
+            colors.append(cmap.colors[-i // 2])
+    return mcolors.ListedColormap(colors)
 
-    # Note that if base_cmap is a string or None, you can simply do
-    #    return plt.cm.get_cmap(base_cmap, N)
-    # The following works for string, None, or a colormap instance:
-
-    base = plt.cm.get_cmap(base_cmap)
-    color_list = base(np.linspace(0, 1, N))
-    cmap_name = base.name + str(N)
-    return base.from_list(cmap_name, color_list, N)
+#     base = plt.cm.get_cmap(base_cmap)
+#     color_list = base(np.linspace(0, 1, N))
+#     cmap_name = base.name + str(N)
+#     return base.from_list(cmap_name, color_list, N)
 
 
 def fit_chi2(func, datax, datay, datayerror, p_init=None):
@@ -34,10 +39,10 @@ def fit_chi2(func, datax, datay, datayerror, p_init=None):
     else:
         chi2ndf = np.NAN
     func2 = lambda x: func(x, *popt)
-    print "result of chi2 fit:"
-    print "\tchi2/ndf = %0.2g/%i = %0.2g" % (chi2, len(datax) - len(popt), chi2ndf)
-    print "\tpopt = ", popt
-    print "\tcov = ", cov
+    print("result of chi2 fit:")
+    print("\tchi2/ndf = %0.2g/%i = %0.2g" % (chi2, len(datax) - len(popt), chi2ndf))
+    print("\tpopt = ", popt)
+    print("\tcov = ", cov)
     return popt, cov, chi2ndf, func2
 
 
@@ -117,7 +122,7 @@ def plot_fit_stats2(ax, popt, cov, chi2ndf, posx=0.95, posy=0.95):
         for i, p in enumerate(popt):
             table.addValue("p%i" % i, p, cov[i, i] ** 0.5)
     props = dict(boxstyle='square', facecolor='wheat', alpha=0.5)
-    print table.getTable()
+    print(table.getTable())
     ax.text(posx, posy, r'$%s$' % table.getTable(), transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', horizontalalignment='right',
                 multialignment='left', bbox=props)
@@ -126,55 +131,70 @@ def plot_fit_stats2(ax, popt, cov, chi2ndf, posx=0.95, posy=0.95):
 def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
                     underflow=None, rel=False,
                     additional_text="", additional_text_pre="",
-                    fontsize=22, color="k", va="top", ha="left",
-                    median=True, quantiles=True, mean=True, std=True, N=True):
+                    fontsize=12, color="k", va="top", ha="left",
+                    median=True, quantiles=True, mean=True, std=True, N=True,
+                    single_sided=False):
     data = np.array(data)
-    tmean = data.mean()
-    tstd = data.std()
-    if weights is not None:
-        def weighted_avg_and_std(values, weights):
-            """
-            Return the weighted average and standard deviation.
-
-            values, weights -- Numpy ndarrays with the same shape.
-            """
-            average = np.average(values, weights=weights)
-            variance = np.average((values - average) ** 2, weights=weights)  # Fast and numerically precise
-            return (average, variance ** 0.5)
-        tmean, tstd = weighted_avg_and_std(data, weights)
-
     textstr = additional_text_pre
     if (textstr != ""):
         textstr += "\n"
     if N:
         textstr += "$N=%i$\n" % data.size
-#     import SignificantFigures as serror
-    if mean:
-        if weights is None:
-#             textstr += "$\mu = %s \pm %s$\n" % serror.formatError(tmean,
-#                                                 tstd / math.sqrt(data.size))
-            textstr += "$\mu = %.4g$\n" % mean
-        else:
-            textstr += "$\mu = %.2g$\n" % tmean
-    if median:
-        tweights = np.ones_like(data)
+    if not single_sided:
+        tmean = data.mean()
+        tstd = data.std()
         if weights is not None:
-            tweights = weights
-        from astrotools import stat
-        if quantiles:
-            q1 = stat.quantile_1d(data, tweights, 0.16)
-            q2 = stat.quantile_1d(data, tweights, 0.84)
-            median = stat.median(data, tweights)
-#             median_str = serror.formatError(median, 0.05 * (np.abs(median - q2) + np.abs(median - q1)))[0]
-            textstr += "$\mathrm{median} = %.2g^{+%.2g}_{-%.2g}$\n" % (median, np.abs(median - q2),
-                                                                       np.abs(median - q1))
+
+            def weighted_avg_and_std(values, weights):
+                """
+                Return the weighted average and standard deviation.
+
+                values, weights -- Numpy ndarrays with the same shape.
+                """
+                average = np.average(values, weights=weights)
+                variance = np.average((values - average) ** 2, weights=weights)  # Fast and numerically precise
+                return (average, variance ** 0.5)
+
+            tmean, tstd = weighted_avg_and_std(data, weights)
+
+    #     import SignificantFigures as serror
+        if mean:
+            if weights is None:
+    #             textstr += "$\mu = %s \pm %s$\n" % serror.formatError(tmean,
+    #                                                 tstd / math.sqrt(data.size))
+                textstr += "$\mu = %.2g$\n" % tmean
+            else:
+                textstr += "$\mu = %.2g$\n" % tmean
+        if median:
+            tweights = np.ones_like(data)
+            if weights is not None:
+                tweights = weights
+            import stat
+            if quantiles:
+                q1 = stat.quantile_1d(data, tweights, 0.16)
+                q2 = stat.quantile_1d(data, tweights, 0.84)
+                median = stat.median(data, tweights)
+    #             median_str = serror.formatError(median, 0.05 * (np.abs(median - q2) + np.abs(median - q1)))[0]
+                textstr += "$\mathrm{median} = %.2g^{+%.2g}_{-%.2g}$\n" % (median, np.abs(median - q2),
+                                                                           np.abs(median - q1))
+            else:
+                textstr += "$\mathrm{median} = %.2g $\n" % stat.median(data, tweights)
+        if std:
+            if rel:
+                textstr += "$\sigma = %.2g$ (%.1f\%%)\n" % (tstd, tstd / tmean * 100.)
+            else:
+                textstr += "$\sigma = %.2g$\n" % (tstd)
+    else:
+        import stat
+        if(weights is None):
+            w = np.ones_like(data)
         else:
-            textstr += "$\mathrm{median} = %.2g $\n" % stat.median(data, tweights)
-    if std:
-        if rel:
-            textstr += "$\sigma = %.2g$ (%.1f\%%)\n" % (tstd, tstd / tmean * 100.)
-        else:
-            textstr += "$\sigma = %.2g$\n" % (tstd)
+            w = weights
+        q68 = stat.quantile_1d(data, weights=w, quant=.68)
+        q95 = stat.quantile_1d(data, weights=w, quant=.95)
+        textstr += "$\sigma_\mathrm{{68}}$ = {:.1f}$^\circ$\n".format(q68)
+        textstr += "$\sigma_\mathrm{{95}}$ = {:.1f}$^\circ$\n".format(q95)
+
     if(overflow):
         textstr += "$\mathrm{overflows} = %i$\n" % overflow
     if(underflow):
@@ -270,7 +290,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
         elif(N <= 35):
             fig, axes = plt.subplots(5, 7, figsize=(figsize * 7, figsize * 5))
         else:
-            print "WARNING: more than 35 pads are not implemented"
+            print("WARNING: more than 35 pads are not implemented")
             raise "WARNING: more than 35 pads are not implemented"
     shape = np.array(np.array(axes).shape)
     n1 = shape[0]
@@ -358,7 +378,7 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
     ax1.set_xlabel(xlabel)
     ax1.set_ylabel(ylabel)
     ax1.set_title(title)
-    n, bins, patches = ax1.hist(data, bins, normed=0, weights=weights, **kwargs)
+    n, bins, patches = ax1.hist(data, bins, density=0, weights=weights, **kwargs)
     if(funcs):
         for func in funcs:
             xlim = np.array(ax1.get_xlim())
@@ -416,7 +436,7 @@ def get_marker(i):
 def get_marker2(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
     markers = ["o", "^", "D", "s"]
-    return colors[i % len(colors)] + markers[i % len(colors)]
+    return colors[i % len(colors)] + markers[i % len(markers)]
 
 
 def get_color(i):
@@ -424,5 +444,7 @@ def get_color(i):
     return colors[i % len(colors)]
 
 
-
-
+def get_color_linestyle(i):
+    colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+    markers = ["-", "--", ":", "-."]
+    return markers[i % len(markers)] + colors[i % len(colors)]

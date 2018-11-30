@@ -82,10 +82,16 @@ def cartesian_to_spherical(x, y, z):
     y2 = y / norm
     z2 = z / norm
     theta = 0
-    if (z2 < 1):
-        theta = np.arccos(z2)
-    phi = np.arctan2(y2, x2)
-    return theta, phi
+    if hasattr(x, '__len__') and hasattr(y, '__len__')and hasattr(z, '__len__'):
+        theta = np.zeros_like(x)
+        theta[z2 < 1] = np.arccos(z2[z2 < 1])
+        phi = np.arctan2(y2, x2)
+        return theta, phi
+    else:
+        if (z2 < 1):
+            theta = np.arccos(z2)
+        phi = np.arctan2(y2, x2)
+        return theta, phi
 
 
 def cartesian_to_spherical_vectorized(x, y, z):
@@ -94,10 +100,6 @@ def cartesian_to_spherical_vectorized(x, y, z):
     x2 = x / norm
     y2 = y / norm
     z2 = z / norm
-    theta = np.zeros_like(x)
-    theta[z2 < 1] = np.arccos(z2[z2 < 1])
-    phi = np.arctan2(y2, x2)
-    return theta, phi
 
 
 def get_angle(v1, v2):
@@ -116,18 +118,24 @@ def get_angle(v1, v2):
 
 
 def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
+    import collections
     if degree:
         interval = np.rad2deg(interval)
     delta = interval[1] - interval[0]
-    while (angle >= interval[1]):
-        angle -= delta
-    while (angle < interval[0]):
-        angle += delta
+    if(isinstance(angle, (collections.Sequence, np.ndarray))):
+        angle[angle >= interval[1]] -= delta
+        angle[angle < interval[0]] += delta
+    else:
+        while (angle >= interval[1]):
+            angle -= delta
+        while (angle < interval[0]):
+            angle += delta
     return angle
 
 
 def get_declination(magnetic_field_vector):
-    declination = np.arccos(np.dot(np.array([0, 1]), magnetic_field_vector[:2] / np.linalg.norm(magnetic_field_vector[:2])))
+    declination = np.arccos(np.dot(np.array([0, 1]), magnetic_field_vector[:2] /
+                                   np.linalg.norm(magnetic_field_vector[:2])))
     return declination
 
 
@@ -161,6 +169,11 @@ def get_magneticfield_azimuth(magnetic_field_declination):
     return magnetic_field_declination + np.deg2rad(90)
 
 
+def get_inclination(magnetic_field_vector):
+    zenith, azimuth = cartesian_to_spherical(*magnetic_field_vector)
+    return np.deg2rad(90) - zenith
+
+
 def get_magneticfield_zenith(magnetic_field_inclination):
     if (magnetic_field_inclination < 0):
         return magnetic_field_inclination + np.deg2rad(90)
@@ -177,7 +190,8 @@ def get_lorentzforce_vector(zenith, azimuth, magnetic_field_vector=None):
     if (magnetic_field_vector is None):
         magnetic_field_vector = get_magnetic_field_vector()
     showerAxis = spherical_to_cartesian(zenith, azimuth)
-    magnetic_field_vector_normalized = magnetic_field_vector / np.linalg.norm(magnetic_field_vector.T, axis=0, keepdims=True).T
+    magnetic_field_vector_normalized = magnetic_field_vector / \
+        np.linalg.norm(magnetic_field_vector.T, axis=0, keepdims=True).T
     return np.cross(showerAxis, magnetic_field_vector_normalized)
 
 
@@ -308,8 +322,8 @@ def get_angle_to_efieldexpectation_in_showerplane(efield, core, zenith, azimuth,
                 efield_transformed[i] *= -1.
 
     efield_expectations = get_expected_efield_vector(core, zenith, azimuth,
-                                                  stationPositions, a=a,
-                                                  magnetic_field_vector=magnetic_field_vector)
+                                                     stationPositions, a=a,
+                                                     magnetic_field_vector=magnetic_field_vector)
     exp_efields_transformed = cs.transform_to_vxB_vxvxB(efield_expectations)
     #     print exp_efields_transformed
     #     print exp_efields_transformed[..., 1]
@@ -409,7 +423,7 @@ def has_same_direction(zenith1, azimuth1, zenith2, azimuth2, distancecut=20):
 def get_cherenkov_angle(h, model=1):
     """ returns the cherenkov angle for the density at height above ground
         assuming that the particle speed is the speed of light """
-    from atmosphere import models as atm
+    from radiotools.atmosphere import models as atm
     return np.arccos(1. / (atm.get_n(h, model=model)))
 
 
@@ -417,7 +431,7 @@ def get_cherenkov_ellipse(zenith, xmax, model=1):
     """ returns the major and minor axis of the cherenkov cone projected
     on the ground plane
     reference: 10.1016/j.astropartphys.2014.04.004 """
-    from atmosphere import models as atm
+    from radiotools.atmosphere import models as atm
     h = atm.get_vertical_height(xmax, model=model) / np.cos(zenith)
     cherenkov = get_cherenkov_angle(h, model=model)
     ra = (np.tan(zenith + cherenkov) - np.tan(zenith)) * h
@@ -473,14 +487,14 @@ def is_confined_weak(x, y, station_positions, delta_confinement=0):
 
 
 def in_hull(p, hull):
-#     """
-#     Test if points in `p` are in `hull`
-#
-#     `p` should be a `NxK` coordinates of `N` points in `K` dimensions
-#     `hull` is either a scipy.spatial.Delaunay object or the `MxK` array of the
-#     coordinates of `M` points in `K`dimensions for which Delaunay triangulation
-#     will be computed
-#     """
+    #     """
+    #     Test if points in `p` are in `hull`
+    #
+    #     `p` should be a `NxK` coordinates of `N` points in `K` dimensions
+    #     `hull` is either a scipy.spatial.Delaunay object or the `MxK` array of the
+    #     coordinates of `M` points in `K`dimensions for which Delaunay triangulation
+    #     will be computed
+    #     """
     from scipy.spatial import Delaunay
     if not isinstance(hull, Delaunay):
         hull = Delaunay(hull)
@@ -632,17 +646,15 @@ def covariance_to_correlation(M):
     return np.dot(Dinv, np.dot(M, Dinv))
 
 
-def get_normalized_xcorr(trace1, trace2):
+def get_normalized_xcorr(trace1, trace2, mode='full'):
     from scipy.signal import correlate
-    return correlate(trace1, trace2, mode='full', method='auto') / (np.sum(trace1 ** 2) * np.sum(trace2 ** 2)) ** 0.5
+    return correlate(trace1, trace2, mode=mode, method='auto') / (np.sum(trace1 ** 2) * np.sum(trace2 ** 2)) ** 0.5
 
 
 # Test Code:
 if __name__ == "__main__":
 
-
     import radiotools.HelperFunctions as hp
-
 
     n = 10000
     from radiotools.AERA import coordinates, signal_prediction
@@ -658,12 +670,12 @@ if __name__ == "__main__":
     delta = 500.
 
     cores = np.array([np.random.uniform(positions[..., 0].min() - delta, positions[..., 0].max() + delta, n),
-                     np.random.uniform(positions[..., 1].min() - delta, positions[..., 1].max() + delta, n),
-                     np.zeros(n)]).T
+                      np.random.uniform(positions[..., 1].min() - delta, positions[..., 1].max() + delta, n),
+                      np.zeros(n)]).T
     # distances = np.array([np.min(np.linalg.norm(c - positions, axis=-1)) for c in cores])
     near_AERA_mask = hp.is_confined2(cores[..., 0], cores[..., 1], positions, delta_confinement=150)
     c = hp.is_confined2(cores[near_AERA_mask][..., 0], cores[near_AERA_mask][..., 1], positions, delta_confinement=0)
-    print(100. *np.sum(c) / len(c))
+    print(100. * np.sum(c) / len(c))
     import matplotlib.pyplot as plt
     plt.scatter(cores[near_AERA_mask][..., 0], cores[near_AERA_mask][..., 1])
     plt.scatter(cores[near_AERA_mask][c][..., 0], cores[near_AERA_mask][c][..., 1])

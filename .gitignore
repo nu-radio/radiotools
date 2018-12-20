@@ -101,3 +101,9 @@ ENV/
 .mypy_cache/
 
 radiotools/atmosphere/constants*
+
+.project
+.pydevproject
+.settings/
+radiotools/doc/_build/
+radiotools/doc/copy_docs_to_cglaserde.sh

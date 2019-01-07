@@ -107,3 +107,6 @@ radiotools/atmosphere/constants*
 .settings/
 radiotools/doc/_build/
 radiotools/doc/copy_docs_to_cglaserde.sh
+
+# for kde users
+.directory

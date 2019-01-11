@@ -229,10 +229,3 @@ class cstrafo():
         return psi_1, theta_1, phi_1
 
 
-if __name__ == "__main__":
-    zenith = np.deg2rad(21.2149)
-    azimuth = np.deg2rad(-143.746 + 360.)
-    cs = cstrafo(zenith, azimuth)
-    print [-29.2463, 36.3054, 2.73222], cs.transform_to_vxB_vxvxB(np.array([-29.2463, 36.3054, 2.73222]))
-    print [-288.319, -100.42, 5.16209], cs.transform_to_vxB_vxvxB(np.array([-288.319, -100.42, 5.16209]))
-

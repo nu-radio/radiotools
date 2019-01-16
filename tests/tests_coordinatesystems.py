@@ -14,23 +14,19 @@ v_xyz = np.array([-1 * np.sin(zenith) * np.cos(azimuth),
 
 v_vB_vvB2 = np.array([v_vB_vvB, 2 * v_vB_vvB])
 
-# temporary create a "dummy" list of station positions
-v_vB_vvB_tmp = np.expand_dims(v_vB_vvB, axis=0)
-v_xyz_tmp = np.expand_dims(v_xyz, axis=0)
-
 
 class CoordinateTests(unittest.TestCase):
 
     def test_transform_to_xyz(self):
-        v_xyz_test = cs.transform_from_vxB_vxvxB(v_vB_vvB_tmp)
+        v_xyz_test = cs.transform_from_vxB_vxvxB(v_vB_vvB)
         self.assertTrue(np.allclose(v_xyz, v_xyz_test))
 
     def test_transform_to_vB_vvB(self):
-        v_vB_vvB_test = cs.transform_to_vxB_vxvxB(v_xyz_tmp)
+        v_vB_vvB_test = cs.transform_to_vxB_vxvxB(v_xyz)
         self.assertTrue(np.allclose(v_vB_vvB, v_vB_vvB_test))
 
     def test_transform_single_postion(self):
-        v_vB_vvB_test = cs.transform_from_vxB_vxvxB(cs.transform_to_vxB_vxvxB(v_vB_vvB_tmp))
+        v_vB_vvB_test = cs.transform_from_vxB_vxvxB(cs.transform_to_vxB_vxvxB(v_vB_vvB))
         self.assertTrue(np.allclose(v_vB_vvB, v_vB_vvB_test))
 
     def test_transform_mutiple_postions(self):

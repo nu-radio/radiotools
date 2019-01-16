@@ -135,22 +135,20 @@ class cstrafo():
         unlikely to happen.
 
         """
+        # if a single station position is transformed: (3,) -> (1, 3)
+        if station_position.ndim == 1:
+            station_position = np.expand_dims(station_position, axis=0)
+
         nX, nY = station_position.shape
         if(nY != 3):
             return self.__transform(station_position, self.__transformation_matrix_vBvvB)
         else:
-            station_position = np.array(copy.deepcopy(station_position))
-            if(len(station_position.shape) == 1):
+            result = []
+            for pos in station_position:
                 if(core is not None):
-                    station_position -= core
-                return np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, station_position)))
-            else:
-                result = []
-                for pos in station_position:
-                    if(core is not None):
-                        pos -= core
-                    result.append(np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, pos))))
-                return np.array(result)
+                    pos -= core
+                result.append(np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, pos))))
+            return np.squeeze(np.array(result))
 
     def transform_from_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple
@@ -164,16 +162,13 @@ class cstrafo():
         Note: this logic will fail if a trace will have a shape of (3, 3), which is however
         unlikely to happen.
         """
+        # if a single station position is transformed: (3,) -> (1, 3)
+        if station_position.ndim == 1:
+            station_position = np.expand_dims(station_position, axis=0)
+
         nX, nY = station_position.shape
         if(nY != 3):
             return self.__transform(station_position, self.__inverse_transformation_matrix_vBvvB)
-        if(core is not None):
-            station_position = copy.deepcopy(station_position)
-        if(len(station_position.shape) == 1):
-            temp = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, station_position)))
-            if(core is not None):
-                return temp + core
-            return temp
         else:
             result = []
             for pos in station_position:
@@ -182,7 +177,8 @@ class cstrafo():
                     result.append(temp + core)
                 else:
                     result.append(temp)
-            return np.array(result)
+
+            return np.squeeze(np.array(result))
 
     def transform_from_vxB_vxvxB_2D(self, station_position, core=None):
         """ transform a single station position or a list of multiple
@@ -235,4 +231,3 @@ if __name__ == "__main__":
     cs = cstrafo(zenith, azimuth)
     print [-29.2463, 36.3054, 2.73222], cs.transform_to_vxB_vxvxB(np.array([-29.2463, 36.3054, 2.73222]))
     print [-288.319, -100.42, 5.16209], cs.transform_to_vxB_vxvxB(np.array([-288.319, -100.42, 5.16209]))
-

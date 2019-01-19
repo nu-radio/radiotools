@@ -191,24 +191,23 @@ class cstrafo():
     def transform_from_vxB_vxvxB_2D(self, station_position, core=None):
         """ transform a single station position or a list of multiple
         station positions back to x,y,z CS """
+        # to keep station_position constant (for the outside)
         if(core is not None):
-            station_position = copy.deepcopy(station_position)
-        if(len(station_position.shape) == 1):
-            position = np.array([station_position[0], station_position[1],
-                                 self.get_height_in_showerplane(station_position[0], station_position[1])])
-            result = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, position)))
+            station_position = np.array(copy.deepcopy(station_position))
+
+        # if a single station position is transformed: (3,) -> (1, 3)
+        if station_position.ndim == 1:
+            station_position = np.expand_dims(station_position, axis=0)
+
+        result = []
+        for pos in station_position:
+            position = np.array([pos[0], pos[1], self.get_height_in_showerplane(pos[0], pos[1])])
+            pos_transformed = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, position)))
             if(core is not None):
-                result += core
-            return result
-        else:
-            result = []
-            for pos in station_position:
-                position = np.array([pos[0], pos[1], self.get_height_in_showerplane(pos[0], pos[1])])
-                pos_transformed = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, position)))
-                if(core is not None):
-                    pos_transformed += core
-                result.append(pos_transformed)
-            return np.array(result)
+                pos_transformed += core
+            result.append(pos_transformed)
+
+        return np.squeeze(np.array(result))
 
     def get_height_in_showerplane(self, x, y):
         return -1. * (self.__transformation_matrix_vBvvB[0, 2] * x + self.__transformation_matrix_vBvvB[1, 2] * y) / self.__transformation_matrix_vBvvB[2, 2]

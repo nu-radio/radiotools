@@ -135,6 +135,10 @@ class cstrafo():
         unlikely to happen.
 
         """
+        # to keep station_position constant (for the outside)
+        if(core is not None):
+            station_position = np.array(copy.deepcopy(station_position))
+
         # if a single station position is transformed: (3,) -> (1, 3)
         if station_position.ndim == 1:
             station_position = np.expand_dims(station_position, axis=0)
@@ -162,6 +166,10 @@ class cstrafo():
         Note: this logic will fail if a trace will have a shape of (3, 3), which is however
         unlikely to happen.
         """
+        # to keep station_position constant (for the outside)
+        if(core is not None):
+            station_position = np.array(copy.deepcopy(station_position))
+
         # if a single station position is transformed: (3,) -> (1, 3)
         if station_position.ndim == 1:
             station_position = np.expand_dims(station_position, axis=0)

@@ -169,16 +169,16 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
             tweights = np.ones_like(data)
             if weights is not None:
                 tweights = weights
-            import stat
+            import stats
             if quantiles:
-                q1 = stat.quantile_1d(data, tweights, 0.16)
-                q2 = stat.quantile_1d(data, tweights, 0.84)
-                median = stat.median(data, tweights)
+                q1 = stats.quantile_1d(data, tweights, 0.16)
+                q2 = stats.quantile_1d(data, tweights, 0.84)
+                median = stats.median(data, tweights)
     #             median_str = serror.formatError(median, 0.05 * (np.abs(median - q2) + np.abs(median - q1)))[0]
                 textstr += "$\mathrm{median} = %.2g^{+%.2g}_{-%.2g}$\n" % (median, np.abs(median - q2),
                                                                            np.abs(median - q1))
             else:
-                textstr += "$\mathrm{median} = %.2g $\n" % stat.median(data, tweights)
+                textstr += "$\mathrm{median} = %.2g $\n" % stats.median(data, tweights)
         if std:
             if rel:
                 textstr += "$\sigma = %.2g$ (%.1f\%%)\n" % (tstd, tstd / tmean * 100.)
@@ -190,8 +190,8 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
             w = np.ones_like(data)
         else:
             w = weights
-        q68 = stat.quantile_1d(data, weights=w, quant=.68)
-        q95 = stat.quantile_1d(data, weights=w, quant=.95)
+        q68 = stats.quantile_1d(data, weights=w, quant=.68)
+        q95 = stats.quantile_1d(data, weights=w, quant=.95)
         textstr += "$\sigma_\mathrm{{68}}$ = {:.1f}$^\circ$\n".format(q68)
         textstr += "$\sigma_\mathrm{{95}}$ = {:.1f}$^\circ$\n".format(q95)
 

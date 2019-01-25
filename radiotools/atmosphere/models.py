@@ -800,7 +800,7 @@ class Atmosphere():
                                                  observation_level=observation_level)
 
     def _get_distance_xmax_geometric(self, zenith, xmax, observation_level=1564.):
-        h = self._get_vertical_height(zenith, xmax)
+        h = self._get_vertical_height(zenith, xmax) - observation_level
         return get_distance_for_height_above_ground(h, zenith, observation_level)
 
 #     def __get_distance_xmax_geometric_flat(self, xmax, observation_level=1564.):

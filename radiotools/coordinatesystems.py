@@ -135,22 +135,24 @@ class cstrafo():
         unlikely to happen.
 
         """
+        # to keep station_position constant (for the outside)
+        if(core is not None):
+            station_position = np.array(copy.deepcopy(station_position))
+
+        # if a single station position is transformed: (3,) -> (1, 3)
+        if station_position.ndim == 1:
+            station_position = np.expand_dims(station_position, axis=0)
+
         nX, nY = station_position.shape
         if(nY != 3):
             return self.__transform(station_position, self.__transformation_matrix_vBvvB)
         else:
-            station_position = np.array(copy.deepcopy(station_position))
-            if(len(station_position.shape) == 1):
+            result = []
+            for pos in station_position:
                 if(core is not None):
-                    station_position -= core
-                return np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, station_position)))
-            else:
-                result = []
-                for pos in station_position:
-                    if(core is not None):
-                        pos -= core
-                    result.append(np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, pos))))
-                return np.array(result)
+                    pos -= core
+                result.append(np.squeeze(np.asarray(np.dot(self.__transformation_matrix_vBvvB, pos))))
+            return np.squeeze(np.array(result))
 
     def transform_from_vxB_vxvxB(self, station_position, core=None):
         """ transform a single station position or a list of multiple
@@ -164,16 +166,17 @@ class cstrafo():
         Note: this logic will fail if a trace will have a shape of (3, 3), which is however
         unlikely to happen.
         """
+        # to keep station_position constant (for the outside)
+        if(core is not None):
+            station_position = np.array(copy.deepcopy(station_position))
+
+        # if a single station position is transformed: (3,) -> (1, 3)
+        if station_position.ndim == 1:
+            station_position = np.expand_dims(station_position, axis=0)
+
         nX, nY = station_position.shape
         if(nY != 3):
             return self.__transform(station_position, self.__inverse_transformation_matrix_vBvvB)
-        if(core is not None):
-            station_position = copy.deepcopy(station_position)
-        if(len(station_position.shape) == 1):
-            temp = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, station_position)))
-            if(core is not None):
-                return temp + core
-            return temp
         else:
             result = []
             for pos in station_position:
@@ -182,29 +185,29 @@ class cstrafo():
                     result.append(temp + core)
                 else:
                     result.append(temp)
-            return np.array(result)
+
+            return np.squeeze(np.array(result))
 
     def transform_from_vxB_vxvxB_2D(self, station_position, core=None):
         """ transform a single station position or a list of multiple
         station positions back to x,y,z CS """
+        # to keep station_position constant (for the outside)
         if(core is not None):
-            station_position = copy.deepcopy(station_position)
-        if(len(station_position.shape) == 1):
-            position = np.array([station_position[0], station_position[1],
-                                 self.get_height_in_showerplane(station_position[0], station_position[1])])
-            result = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, position)))
+            station_position = np.array(copy.deepcopy(station_position))
+
+        # if a single station position is transformed: (3,) -> (1, 3)
+        if station_position.ndim == 1:
+            station_position = np.expand_dims(station_position, axis=0)
+
+        result = []
+        for pos in station_position:
+            position = np.array([pos[0], pos[1], self.get_height_in_showerplane(pos[0], pos[1])])
+            pos_transformed = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, position)))
             if(core is not None):
-                result += core
-            return result
-        else:
-            result = []
-            for pos in station_position:
-                position = np.array([pos[0], pos[1], self.get_height_in_showerplane(pos[0], pos[1])])
-                pos_transformed = np.squeeze(np.asarray(np.dot(self.__inverse_transformation_matrix_vBvvB, position)))
-                if(core is not None):
-                    pos_transformed += core
-                result.append(pos_transformed)
-            return np.array(result)
+                pos_transformed += core
+            result.append(pos_transformed)
+
+        return np.squeeze(np.array(result))
 
     def get_height_in_showerplane(self, x, y):
         return -1. * (self.__transformation_matrix_vBvvB[0, 2] * x + self.__transformation_matrix_vBvvB[1, 2] * y) / self.__transformation_matrix_vBvvB[2, 2]
@@ -227,5 +230,3 @@ class cstrafo():
                 theta_1 = -1. * math.pi * 0.5
                 psi_1 = -phi_1 + math.atan2(-R[0, 1], -R[0, 2])
         return psi_1, theta_1, phi_1
-
-

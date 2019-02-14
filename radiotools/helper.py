@@ -100,6 +100,7 @@ def cartesian_to_spherical_vectorized(x, y, z):
     x2 = x / norm
     y2 = y / norm
     z2 = z / norm
+    return x2, y2, z2
 
 
 def get_angle(v1, v2):

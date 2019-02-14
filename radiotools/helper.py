@@ -94,15 +94,6 @@ def cartesian_to_spherical(x, y, z):
         return theta, phi
 
 
-def cartesian_to_spherical_vectorized(x, y, z):
-    # normlize vector
-    norm = (x ** 2 + y ** 2 + z ** 2) ** 0.5
-    x2 = x / norm
-    y2 = y / norm
-    z2 = z / norm
-    return x2, y2, z2
-
-
 def get_angle(v1, v2):
     arccos = np.dot(v1, v2) / (np.linalg.norm(v1.T, axis=0) * np.linalg.norm(v2.T, axis=0))
     # catch numerical overlow

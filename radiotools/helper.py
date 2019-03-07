@@ -651,6 +651,29 @@ def get_normalized_xcorr(trace1, trace2, mode='full'):
     return correlate(trace1, trace2, mode=mode, method='auto') / (np.sum(trace1 ** 2) * np.sum(trace2 ** 2)) ** 0.5
 
 
+def linreg(x, y):
+    '''
+    Linear regression: for a distribution y(x) returns the offset a and slope b
+    for the function y_lin(x) = a + b*x that approximates y(x) the best (sum of squares)
+    of residuals is minimized). 
+    ''' 
+    # number of observations/points 
+    n = np.size(x) 
+  
+    # mean of x and y vector 
+    m_x, m_y = np.mean(x), np.mean(y) 
+  
+    # calculating cross-deviation and deviation about x 
+    SS_xy = np.sum(y*x) - n*m_y*m_x 
+    SS_xx = np.sum(x*x) - n*m_x*m_x 
+  
+    # calculating regression coefficients 
+    b = SS_xy / SS_xx   # slope 
+    a = m_y - b*m_x     # zero-offset
+  
+    return(a, b) 
+
+
 # Test Code:
 if __name__ == "__main__":
 

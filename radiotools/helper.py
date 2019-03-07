@@ -653,9 +653,16 @@ def get_normalized_xcorr(trace1, trace2, mode='full'):
 
 def linreg(x, y):
     '''
-    Linear regression: for a distribution y(x) returns the offset a and slope b
-    for the function y_lin(x) = a + b*x that approximates y(x) the best (sum of squares)
-    of residuals is minimized). 
+    Linear regression: returns the offset a and slope b for the function y_lin(x) = a + b*x 
+    that approximates the distribtion y(x) the best (sum of squares of residuals is minimized). 
+    
+    input:
+        x: array-like, values where y-values are valid
+        y: array-like, must have same length as x, values y(x)
+        
+    output:
+        a = offset of linear function resulting from regression
+        b = slope of linear function resulting from regression
     ''' 
     # number of observations/points 
     n = np.size(x) 

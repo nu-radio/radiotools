@@ -117,6 +117,17 @@ def get_angle(v1, v2):
     return np.arccos(arccos)
 
 
+def get_rotation(v1, v2):
+    """
+    calculates the rotation matrix to transform vector 1 to vector 2
+    """
+    v = np.cross(v1, v2)
+    phi = get_angle(v1, v2)
+    v_x = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    vx2 = np.matmul(v_x, v_x)
+    return np.identity(3) + v_x + vx2 * 1. / (1 + np.cos(phi))
+
+
 def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
     import collections
     if degree:
@@ -134,7 +145,7 @@ def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
 
 
 def get_declination(magnetic_field_vector):
-    declination = np.arccos(np.dot(np.array([0, 1]), magnetic_field_vector[:2] /
+    declination = np.arccos(np.dot(np.array([0, 1]), magnetic_field_vector[:2] / 
                                    np.linalg.norm(magnetic_field_vector[:2])))
     return declination
 
@@ -378,7 +389,7 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
         [[xx_error ** 2, xx_error * yy_error * xy_correlation], [xx_error * yy_error * xy_correlation, yy_error ** 2]])
     p = multivariate_normal.pdf([x, y], mean=[xx, yy], cov=cov)
     denom = (2 * np.pi * xx_error * yy_error * np.sqrt(1 - xy_correlation ** 2))
-    nom = np.exp(-1. / (2 * (1 - xy_correlation ** 2)) *
+    nom = np.exp(-1. / (2 * (1 - xy_correlation ** 2)) * 
                  ((x - xx) ** 2 / xx_error ** 2 + (y - yy) ** 2 / yy_error ** 2 - 2 * xy_correlation * (x - xx) * (
                      y - yy) / (xx_error * yy_error)))
     if sigma:
@@ -671,12 +682,12 @@ def linreg(x, y):
     m_x, m_y = np.mean(x), np.mean(y) 
   
     # calculating cross-deviation and deviation about x 
-    SS_xy = np.sum(y*x) - n*m_y*m_x 
-    SS_xx = np.sum(x*x) - n*m_x*m_x 
+    SS_xy = np.sum(y * x) - n * m_y * m_x 
+    SS_xx = np.sum(x * x) - n * m_x * m_x 
   
     # calculating regression coefficients 
-    b = SS_xy / SS_xx   # slope 
-    a = m_y - b*m_x     # zero-offset
+    b = SS_xy / SS_xx  # slope 
+    a = m_y - b * m_x  # zero-offset
   
     return(a, b) 
 

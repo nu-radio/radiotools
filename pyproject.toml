@@ -1,0 +1,11 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "radiotools"
+author = "Christian Glaser"
+author-email = "work@c-glaser.de"
+home-page = "https://github.com/nu-radio/radiotools"
+classifiers = ["License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"]
+

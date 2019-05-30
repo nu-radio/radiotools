@@ -122,7 +122,7 @@ def plot_fit_stats2(ax, popt, cov, chi2ndf, posx=0.95, posy=0.95):
         for i, p in enumerate(popt):
             table.addValue("p%i" % i, p, cov[i, i] ** 0.5)
     props = dict(boxstyle='square', facecolor='wheat', alpha=0.5)
-    print(table.getTable())
+#     print(table.getTable())
     ax.text(posx, posy, r'$%s$' % table.getTable(), transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', horizontalalignment='right',
                 multialignment='left', bbox=props)
@@ -162,9 +162,9 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
             if weights is None:
     #             textstr += "$\mu = %s \pm %s$\n" % serror.formatError(tmean,
     #                                                 tstd / math.sqrt(data.size))
-                textstr += "$\mu = %.2g$\n" % tmean
+                textstr += "$\mu = {:.3g}$\n".format(tmean)
             else:
-                textstr += "$\mu = %.2g$\n" % tmean
+                textstr += "$\mu = {:.3g}$\n".format(tmean)
         if median:
             tweights = np.ones_like(data)
             if weights is not None:
@@ -175,10 +175,10 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
                 q2 = stats.quantile_1d(data, tweights, 0.84)
                 median = stats.median(data, tweights)
     #             median_str = serror.formatError(median, 0.05 * (np.abs(median - q2) + np.abs(median - q1)))[0]
-                textstr += "$\mathrm{median} = %.2g^{+%.2g}_{-%.2g}$\n" % (median, np.abs(median - q2),
+                textstr += "$\mathrm{median} = %.3g^{+%.2g}_{-%.2g}$\n" % (median, np.abs(median - q2),
                                                                            np.abs(median - q1))
             else:
-                textstr += "$\mathrm{median} = %.2g $\n" % stats.median(data, tweights)
+                textstr += "$\mathrm{median} = %.3g $\n" % stats.median(data, tweights)
         if std:
             if rel:
                 textstr += "$\sigma = %.2g$ (%.1f\%%)\n" % (tstd, tstd / tmean * 100.)
@@ -429,13 +429,17 @@ def make_dir(path):
 
 def get_marker(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
-    markers = ["o", "^", "D", "s", ">"]
+    markers = ["o", "D", "^", "s", ">"]
     return colors[i % len(colors)] + markers[i / len(colors)]
+
+def get_marker_only(i):
+    markers = ["o", "D", "^", "s", ">"]
+    return markers[i % len(markers)]
 
 
 def get_marker2(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
-    markers = ["o", "^", "D", "s", ">"]
+    markers = ["o", "D", "^", "s", ">"]
     return colors[i % len(colors)] + markers[i % len(markers)]
 
 

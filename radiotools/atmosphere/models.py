@@ -1,9 +1,10 @@
+# Python 2 and 3: backward-compatible
 from __future__ import absolute_import, division, print_function  # , unicode_literals
 from past.builtins import xrange
 
 import numpy as np
 import os
-import pickle
+
 
 default_curved = True
 default_model = 17
@@ -278,12 +279,12 @@ class Atmosphere():
         self.h = np.append([0], hh)
         if curved:
             folder = os.path.dirname(os.path.abspath(__file__))
-            filename = os.path.join(folder, "constants_%02i_%i.picke" % (self.model, n_taylor))
+            filename = os.path.join(folder, "constants_%02i_%i.npz" % (self.model, n_taylor))
             print("searching constants at ", filename)
             if os.path.exists(filename):
                 print("reading constants from ", filename)
                 fin = open(filename, "rb")
-                self.a, self.d = pickle.load(fin)
+                self.a, self.d = np.load(fin)["a"], np.load(fin)["d"]
                 fin.close()
                 if(len(self.a) != self.number_of_zeniths):
                     os.remove(filename)
@@ -299,9 +300,7 @@ class Atmosphere():
                 # self.d = self.__calculate_d()
                 self.d = np.zeros(self.number_of_zeniths)
                 self.a = self.__calculate_a()
-                fin = open(filename, "w")
-                pickle.dump([self.a, self.d], fin)
-                fin.close()
+                np.savez(filename, a=self.a, d=self.d)
                 print("all constants calculated, exiting now... please rerun your analysis")
                 sys.exit(0)
 

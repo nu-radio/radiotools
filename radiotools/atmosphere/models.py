@@ -1,4 +1,6 @@
 from __future__ import absolute_import, division, print_function  # , unicode_literals
+from past.builtins import xrange
+
 import numpy as np
 import os
 import pickle

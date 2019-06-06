@@ -9,7 +9,7 @@ import os
 default_curved = True
 default_model = 17
 
-r_e = 6.371 * 1e6  # radius of Earth
+r_e = 6371315  # radius of Earth (corsika value)
 
 """
     All functions use "grams" and "meters", only the functions that receive and
@@ -123,9 +123,7 @@ def get_height_above_ground(d, zenith, observation_level=0):
     r = r_e + observation_level
     x = d * np.sin(zenith)
     y = d * np.cos(zenith) + r
-    h = (x ** 2 + y ** 2) ** 0.5 - r
-    # print "d = %.1f, obs = %.1f, z = %.2f -> h = %.1f" % (d, observation_level, np.rad2deg(zenith), h)
-    return h
+    return (x ** 2 + y ** 2) ** 0.5 - r
 
 
 def get_distance_for_height_above_ground(h, zenith, observation_level=0):
@@ -265,7 +263,7 @@ def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False,
 
 class Atmosphere():
 
-    def __init__(self, model=17, n_taylor=5, curved=True, zenith_numeric=np.deg2rad(83)):
+    def __init__(self, model=17, n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(83)):
         import sys
         print("model is ", model)
         self.model = model
@@ -426,10 +424,10 @@ class Atmosphere():
         is_mask_finite = np.sum(mask_finite)
         tmp = np.zeros_like(zenith)
         if np.sum(mask_numeric):
-#             print "getting numeric"
+            print("Calclate atmosphere numerically")
             tmp[mask_numeric] = self._get_atmosphere_numeric(*self.__get_arguments(mask_numeric, zenith, h_low, h_up))
         if np.sum(mask_taylor):
-#             print "getting taylor"
+            print("Calclate atmosphere with taylor")
             tmp[mask_taylor] = self._get_atmosphere_taylor(*self.__get_arguments(mask_taylor, zenith, h_low))
             if(is_mask_finite):
                 # print "\t is finite"
@@ -437,7 +435,7 @@ class Atmosphere():
                 tmp2 = self._get_atmosphere_taylor(*self.__get_arguments(mask_taylor, zenith, h_up))
                 tmp[mask_tmp] = tmp[mask_tmp] - np.array(tmp2)
         if np.sum(mask_flat):
-#             print "getting flat atm"
+            # print "getting flat atm"
             tmp[mask_flat] = self._get_atmosphere_flat(*self.__get_arguments(mask_flat, zenith, h_low))
             if(is_mask_finite):
                 mask_tmp = np.squeeze(mask_finite[mask_flat])
@@ -532,45 +530,28 @@ class Atmosphere():
     def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty):
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
+
         for i in xrange(len(tmp)):
-            from scipy import integrate
-            if(np.array(h_up).size == 1):
-                t_h_up = h_up
-            else:
-                t_h_up = h_up[i]
-            if(np.array(h_low).size == 1):
-                t_h_low = h_low
-            else:
-                t_h_low = h_low[i]
-#             if(np.array(zenith).size == 1):
-#                 z = zenith
-#             else:
-#                 z = zenith[i]
+
+            t_h_low = h_low if (np.array(h_low).size == 1) else h_low[i]
+            t_h_up = h_up if (np.array(h_up).size == 1) else h_up[i]
             z = zenith[i]
-#             t_h_low = h_low[i]
-#             t_h_up = h_up[i]
+
             if t_h_up <= t_h_low:
                 print("WARNING _get_atmosphere_numeric(): upper limit less than lower limit")
                 return np.nan
+
             if t_h_up == np.infty:
                 t_h_up = h_max
-            b = t_h_up
+
             d_low = get_distance_for_height_above_ground(t_h_low, z)
-            d_up = get_distance_for_height_above_ground(b, z)
-            # d_up_1 = d_low + 2.e3
-            # full_atm = 0
-            # points = get_distance_for_height_above_ground(atm_models[self.model]['h'], z).tolist()
-            full_atm = integrate.quad(self._get_density4,
+            d_up = get_distance_for_height_above_ground(t_h_up, z)
+
+            full_atm = integrate.quad(self._get_density_from_distance,
                                       d_low, d_up, args=(z,),
                                       limit=500)[0]
-#             if d_up_1 > d_up:
-#             else:
-#                 full_atm = integrate.quad(self._get_density4,
-#                                           d_low, d_up_1, args=(z,), limit=100, epsabs=1e-4)[0]
-#                 full_atm += integrate.quad(self._get_density4,
-#                                            d_up_1, d_up, args=(z,), limit=100, epsabs=1e-4)[0]
-            # print "getting atmosphere numeric from ", d_low, "to ", d_up, ", = ", full_atm * 1e-4
             tmp[i] = full_atm
+
         return tmp
 
     def _get_atmosphere_flat(self, zenith, h=0):
@@ -599,12 +580,12 @@ class Atmosphere():
 #             d_up = get_distance_for_height_above_ground(b, zenith)
 #             d_up_1 = d_low + 2.e3
 #             if d_up_1 > d_up:
-#                 full_atm = integrate.quad(self._get_density4,
+#                 full_atm = integrate.quad(self._get_density_from_distance,
 #                                           zenith, d_low, d_up, limit=100, epsabs=1e-2)[0]
 #             else:
-#                 full_atm = integrate.quad(self._get_density4,
+#                 full_atm = integrate.quad(self._get_density_from_distance,
 #                                           zenith, d_low, d_up_1, limit=100, epsabs=1e-4)[0]
-#                 full_atm += integrate.quad(self._get_density4,
+#                 full_atm += integrate.quad(self._get_density_from_distance,
 #                                            zenith, d_up_1, d_up, limit=100, epsabs=1e-2)[0]
 #             return full_atm
 #         else:
@@ -637,12 +618,13 @@ class Atmosphere():
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
         tmp = np.zeros_like(zenith)
         if np.sum(mask_numeric):
-            print("get vertical height numeric", zenith)
+            print("Calculate vertical height numerically")
             tmp[mask_numeric] = self._get_vertical_height_numeric(*self.__get_arguments(mask_numeric, zenith, X))
         if np.sum(mask_taylor):
+            print("Calculate vertical height with taylor")
             tmp[mask_taylor] = self._get_vertical_height_numeric_taylor(*self.__get_arguments(mask_taylor, zenith, X))
         if np.sum(mask_flat):
-            print("get vertical height flat")
+            print("Calculate vertical height with flat atmosphere")
             tmp[mask_flat] = self._get_vertical_height_flat(*self.__get_arguments(mask_flat, zenith, X))
         return tmp
 
@@ -716,43 +698,48 @@ class Atmosphere():
         from scipy import optimize
         tmp = np.zeros_like(zenith)
         zenith = np.array(zenith)
+
+        # returns atmosphere between xmax and d
+        def ftmp(d, zenith, xmax, observation_level=0):
+            h = get_height_above_ground(d, zenith, observation_level=observation_level)
+            h += observation_level
+            tmp = self._get_atmosphere_numeric([zenith], h_low=h)
+            dtmp = tmp - xmax
+            return dtmp
+
         for i in xrange(len(tmp)):
 
             x0 = get_distance_for_height_above_ground(self._get_vertical_height_flat(zenith[i], X[i]), zenith[i])
 
-            def ftmp(d, zenith, xmax, observation_level=0):
-                h = get_height_above_ground(d, zenith, observation_level=observation_level)
-                h += observation_level
-                tmp = self._get_atmosphere_numeric([zenith], h_low=h)
-                dtmp = tmp - xmax
-                return dtmp
+            # finding root e.g., distance for given xmax (when difference is 0)
+            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6, args=(zenith[i], X[i]))
 
-            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6,
-                                        args=(zenith[i], X[i]))
             tmp[i] = get_height_above_ground(dxmax_geo, zenith[i])
+
         return tmp
 
     def _get_vertical_height_numeric_taylor(self, zenith, X):
-        from scipy import optimize
         tmp = np.zeros_like(zenith)
         zenith = np.array(zenith)
+
+        def ftmp(d, zenith, xmax, observation_level=0):
+            h = get_height_above_ground(d, zenith, observation_level=observation_level)
+            h += observation_level
+            tmp = self._get_atmosphere_taylor(np.array([zenith]), h_low=np.array([h]))
+            dtmp = tmp - xmax
+            return dtmp
+
         for i in xrange(len(tmp)):
             if(X[i] < 0):
                 X[i] = 0
+
             x0 = get_distance_for_height_above_ground(self._get_vertical_height_flat(zenith[i], X[i]), zenith[i])
 
-            def ftmp(d, zenith, xmax, observation_level=0):
-                h = get_height_above_ground(d, zenith, observation_level=observation_level)
-                h += observation_level
-                tmp = self._get_atmosphere_taylor(np.array([zenith]), h_low=np.array([h]))
-                dtmp = tmp - xmax
-                return dtmp
+            # find root = distance of xmax
+            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6, args=(zenith[i], X[i]))
 
-#             print zenith[i], X[i]
-
-            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6,
-                                        args=(zenith[i], X[i]))
             tmp[i] = get_height_above_ground(dxmax_geo, zenith[i])
+
         return tmp
 
     def _get_vertical_height_flat(self, zenith, X):
@@ -772,9 +759,9 @@ class Atmosphere():
 
 #     def __get_density2_curved(self, xmax):
 #         dxmax_geo = self._get_distance_xmax_geometric(xmax, observation_level=0)
-#         return self._get_density4(dxmax_geo)
-#
-    def _get_density4(self, d, zenith):
+#         return self._get_density_from_distance(dxmax_geo)
+
+    def _get_density_from_distance(self, d, zenith):
         h = get_height_above_ground(d, zenith)
         return get_density(h, model=self.model)
 

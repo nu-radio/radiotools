@@ -269,7 +269,7 @@ def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False,
 
 class Atmosphere():
 
-    def __init__(self, model=17, n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(83)):
+    def __init__(self, model=17, n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80)):
         print("model is ", model)
         self.model = model
         self.curved = curved

@@ -2,9 +2,11 @@
 from __future__ import absolute_import, division, print_function  # , unicode_literals
 from past.builtins import xrange
 
+from scipy import optimize, interpolate, integrate
+
 import numpy as np
 import os
-
+import sys
 
 default_curved = True
 default_model = 17
@@ -252,7 +254,6 @@ def get_density_from_barometric_formula(hh):
 
 def get_atmosphere_upper_limit(model=default_model):
         """ returns the altitude where the mass overburden vanishes """
-        from scipy import optimize
         from functools import partial
         return optimize.newton(partial(_get_atmosphere, model=model), x0=112.8e3)
 
@@ -266,7 +267,6 @@ def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False,
 class Atmosphere():
 
     def __init__(self, model=17, n_taylor=5, curved=True, zenith_numeric=np.deg2rad(83)):
-        import sys
         print("model is ", model)
         self.model = model
         self.curved = curved
@@ -292,10 +292,9 @@ class Atmosphere():
                     sys.exit(0)
                 self.a_funcs = []
                 zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
-                from scipy.interpolate import interp1d
                 mask = zeniths < np.deg2rad(90)
                 for i in xrange(5):
-                    self.a_funcs.append(interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic'))
+                    self.a_funcs.append(interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic'))
             else:
                 # self.d = self.__calculate_d()
                 self.d = np.zeros(self.number_of_zeniths)
@@ -369,7 +368,6 @@ class Atmosphere():
                 dldh += tmp2
         else:
             print("ERROR, height index our of bounds")
-            import sys
             sys.exit(-1)
 
         # print "get dldh for h= %.8g, z = %.8g, iH=%i -> %.7f" % (h, np.rad2deg(zenith), iH, dldh)
@@ -487,10 +485,9 @@ class Atmosphere():
         ax.legend()
         plt.tight_layout()
 
-        from scipy.interpolate import interp1d
         for i in xrange(5):
             y = self.a[..., i][mask]
-            f2 = interp1d(x, y, kind='cubic')
+            f2 = interpolate.interp1d(x, y, kind='cubic')
             xxx = np.linspace(0, 81, 100)
             ax.plot(xxx, f2(xxx), "-")
 
@@ -533,7 +530,6 @@ class Atmosphere():
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
         for i in xrange(len(tmp)):
-            from scipy import integrate
             if(np.array(h_up).size == 1):
                 t_h_up = h_up
             else:
@@ -588,7 +584,6 @@ class Atmosphere():
 
 #     def _get_atmosphere2(self, zenith, h_low=0., h_up=np.infty):
 #         if use_curved(zenith, self.curved):
-#             from scipy import integrate
 #             if h_up <= h_low:
 #                 print "WARNING: upper limit less than lower limit"
 #                 return np.nan
@@ -713,7 +708,6 @@ class Atmosphere():
         return tmp
 
     def _get_vertical_height_numeric(self, zenith, X):
-        from scipy import optimize
         tmp = np.zeros_like(zenith)
         zenith = np.array(zenith)
         for i in xrange(len(tmp)):
@@ -733,7 +727,6 @@ class Atmosphere():
         return tmp
 
     def _get_vertical_height_numeric_taylor(self, zenith, X):
-        from scipy import optimize
         tmp = np.zeros_like(zenith)
         zenith = np.array(zenith)
         for i in xrange(len(tmp)):
@@ -832,7 +825,6 @@ class Atmosphere():
 #                                  model=default_model,
 #                                  curved=default_curved):
 #     if curved:
-#         from scipy import optimize
 #         x0 = _get_distance_xmax_geometric(zenith, xmax,
 #                                           observation_level=observation_level,
 #                                           model=model, curved=False)

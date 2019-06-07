@@ -329,6 +329,10 @@ class AtmosphereTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # initilize Atmosphere (tables)
-    atmos.Atmosphere()
+    try:
+        # initilize Atmosphere (tables)
+        atmos.Atmosphere()
+    except SystemExit:
+        print('Initilized Atmosphere')
+
     unittest.main()

@@ -21,7 +21,7 @@ v_xyz = -1 * np.array([np.sin(zenith) * np.cos(azimuth),
 v_vB_vvB2 = np.array([v_vB_vvB, 2 * v_vB_vvB])
 
 # test traces
-test_data = np.load("./test_data/efield_traces.npz", "r")
+test_data = np.load("tests/test_data/efield_traces.npz", "r")
 t_xyz = test_data["t_xyz"]
 t_vB_vvB = test_data["t_vBvvB"]
 

@@ -198,17 +198,20 @@ def get_density(h, allow_negative_heights=True, model=default_model):
     b = atm_models[model]['b']
     c = atm_models[model]['c']
     layers = atm_models[model]['h']
+
     y = np.zeros_like(h, dtype=np.float)
     if not allow_negative_heights:
         y *= np.nan  # set all requested densities for h < 0 to nan
         y = np.where(h < 0, y, b[0] * np.exp(-1 * h / c[0]) / c[0])
     else:
         y = b[0] * np.exp(-1 * h / c[0]) / c[0]
+
     y = np.where(h < layers[0], y, b[1] * np.exp(-1 * h / c[1]) / c[1])
     y = np.where(h < layers[1], y, b[2] * np.exp(-1 * h / c[2]) / c[2])
     y = np.where(h < layers[2], y, b[3] * np.exp(-1 * h / c[3]) / c[3])
     y = np.where(h < layers[3], y, b[4] / c[4])
     y = np.where(h < h_max, y, 0)
+
     return y
 
 
@@ -288,14 +291,13 @@ class Atmosphere():
                     os.remove(filename)
                     print("constants outdated, please rerun to calculate new constants")
                     sys.exit(0)
-                self.a_funcs = []
+
                 zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
                 mask = zeniths < np.deg2rad(90)
-                for i in xrange(5):
-                    self.a_funcs.append(interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic'))
+                self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in xrange(5)]
+
             else:
-                # self.d = self.__calculate_d()
-                self.d = np.zeros(self.number_of_zeniths)
+                self.d = np.zeros(self.number_of_zeniths)   # self.d = self.__calculate_d()
                 self.a = self.__calculate_a()
                 np.savez(filename, a=self.a, d=self.d)
                 print("all constants calculated, exiting now... please rerun your analysis")
@@ -310,6 +312,7 @@ class Atmosphere():
             print("calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor))
             a[iZ] = self.__get_a(z)
             print("\t... a  = ", a[iZ], " iZ = ", iZ)
+
         return a
 
     def __get_a(self, zenith):

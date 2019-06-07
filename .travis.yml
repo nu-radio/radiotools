@@ -4,7 +4,7 @@ python:
   - '3.6'
 cache: pip
 install:
-  - pip install numpy scipy matplotlib
+  - pip install numpy scipy matplotlib future
 script:
   - export PYTHONPATH=$PYTHONPATH:$PWD
   - python tests/tests_coordinatesystems.py

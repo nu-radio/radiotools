@@ -3,8 +3,6 @@ from radiotools.atmosphere import models as atm
 import unittest
 import numpy as np
 
-# initilize atmosphere
-at = atm.Atmosphere(model=27)
 
 zen = np.deg2rad(70)
 xmax = 800.  # g/cm2
@@ -12,8 +10,9 @@ xmax = 800.  # g/cm2
 
 class AtmosphereTests(unittest.TestCase):
 
-    # this is a rather weak test checking if the observation_level is used in the calculation at all 
+    # this is a rather weak test checking if the observation_level is used in the calculation at all
     def test_geometric_distance_to_xmax_for_different_obs_lvl(self):
+        at = atm.Atmosphere()
         dxmax_0 = at.get_distance_xmax_geometric(zen, xmax, observation_level=0.)
         dxmax_1564 = at.get_distance_xmax_geometric(zen, xmax, observation_level=1564.)
         dxmax_3000 = at.get_distance_xmax_geometric(zen, xmax, observation_level=3000.)
@@ -23,4 +22,9 @@ class AtmosphereTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    try:
+        atm.Atmosphere()
+    except BaseException:
+        print "Initialized Atmosphere."
+
     unittest.main()

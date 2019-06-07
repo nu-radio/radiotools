@@ -3,7 +3,7 @@ python:
   - '2.7'
 cache: pip
 install:
-  - pip install numpy scipy unittest pickle matplotlib
+  - pip install numpy scipy matplotlib
 script:
   - python tests/tests_coordinatesystems.py
   - python tests/tests_atmosphere.py

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from radiotools.atmosphere import models as atm
 
 import unittest
@@ -25,6 +26,6 @@ if __name__ == "__main__":
     try:
         atm.Atmosphere()
     except BaseException:
-        print "Initialized Atmosphere."
+        print("Initialized Atmosphere.")
 
     unittest.main()

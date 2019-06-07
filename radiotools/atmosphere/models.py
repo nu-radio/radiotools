@@ -280,9 +280,10 @@ class Atmosphere():
             print("searching constants at ", filename)
             if os.path.exists(filename):
                 print("reading constants from ", filename)
-                fin = open(filename, "rb")
-                self.a, self.d = np.load(fin)["a"], np.load(fin)["d"]
-                fin.close()
+
+                with np.load(filename, "rb") as fin:
+                    self.a, self.d = fin["a"], fin["d"]
+
                 if(len(self.a) != self.number_of_zeniths):
                     os.remove(filename)
                     print("constants outdated, please rerun to calculate new constants")

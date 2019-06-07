@@ -1,0 +1,11 @@
+language: python
+python:
+  - '2.7'
+  - '3.6'
+cache: pip
+install:
+  - pip install numpy scipy matplotlib
+script:
+  - export PYTHONPATH=$PYTHONPATH:$PWD
+  - python tests/tests_coordinatesystems.py
+  - python tests/tests_atmosphere.py

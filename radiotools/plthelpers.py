@@ -378,7 +378,7 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
     ax1.set_xlabel(xlabel)
     ax1.set_ylabel(ylabel)
     ax1.set_title(title)
-    n, bins, patches = ax1.hist(data, bins, density=0, weights=weights, **kwargs)
+    n, bins, patches = ax1.hist(data, bins, weights=weights, **kwargs)
     if(funcs):
         for func in funcs:
             xlim = np.array(ax1.get_xlim())

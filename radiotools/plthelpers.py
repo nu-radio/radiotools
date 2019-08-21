@@ -409,6 +409,46 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
         return fig, ax1
 
 
+def get_2dhist_normalized_columns(X, Y, fig, ax, binsx, binsy, norm=None, cmap=None):
+    """
+    creates a 2d histogram where the number of entries are normalized to 1 per column
+    
+    Parameters
+    ----------
+    X: array
+        x values
+    Y: array
+        y values
+    fig: figure instance
+        the figure to plot in
+    ax: axis instance
+        the axis to plot in
+    binsx: array
+        the x bins
+    binsy: array
+        the y bins
+    norm: None or Normalize instance (e.g. matplotlib.colors.LogNorm()) (default None)
+        normalization of the color scale
+    cmap: string or None
+        the name of the colormap
+        
+    Returns
+    --------
+    imshow object, colorbar object
+    """
+    H, xedges, yedges = np.histogram2d(X, Y, bins=[binsx, binsy])
+    np.nan_to_num(H)
+#         Hmasked = np.ma.masked_where(H==0,H) # Mask pixels with a value of zero
+    Hmasked = H
+    H_norm_rows = Hmasked / np.outer(Hmasked.sum(axis=1, keepdims=True), np.ones(H.shape[1]))
+
+    if(cmap is not None):
+        cmap = plt.get_cmap(cmap)
+    im = ax.imshow(H_norm_rows.T, extent=(xedges[0], xedges[-1], yedges[-1], yedges[0]),
+               cmap=cmap, aspect='auto', norm=norm)
+    cb = fig.colorbar(im, ax=ax, orientation='vertical')
+    return im, cb
+    
 def save_histogram(filename, *args, **kwargs):
     fig, ax = get_histogram(*args, **kwargs)
     fig.savefig(filename)

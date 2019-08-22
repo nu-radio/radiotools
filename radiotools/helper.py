@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function  # , unicode_literals
-from past.builtins import xrange
 import numpy as np
 
 
@@ -239,7 +238,7 @@ def get_interval(trace, scale=0.5):
     h_max = h.max()
     up_pos = max_pos
     low_pos = max_pos
-    for i in xrange(max_pos, n_samples):
+    for i in range(max_pos, n_samples):
         if (h[i] < h_max * scale):
             up_pos = i
             break
@@ -320,7 +319,7 @@ def get_angle_to_efieldexpectation_in_showerplane(efield, core, zenith, azimuth,
         if (efield_transformed[0] > 0):
             efield_transformed *= -1.
     else:
-        for i in xrange(len(efield_transformed)):
+        for i in range(len(efield_transformed)):
             if (efield_transformed[i][0] > 0):
                 efield_transformed[i] *= -1.
 
@@ -341,7 +340,7 @@ def get_angle_to_efieldexpectation_in_showerplane(efield, core, zenith, azimuth,
         while (diff < -np.pi):
             diff += 2 * np.pi
     else:
-        for i in xrange(len(diff)):
+        for i in range(len(diff)):
             while (diff[i] > np.pi):
                 diff[i] -= 2 * np.pi
             while (diff[i] < -np.pi):

@@ -2,6 +2,7 @@ import inspect, re
 import math
 import os
 from matplotlib import colors as mcolors
+from past.builtins import xrange
 
 from scipy import optimize
 

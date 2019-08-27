@@ -646,9 +646,8 @@ class Atmosphere():
         zenith = np.array(zenith)
 
         # returns atmosphere between xmax and d
-        def ftmp(d, zenith, xmax, observation_level=0):
-            h = get_height_above_ground(d, zenith, observation_level=observation_level)
-            h += observation_level
+        def ftmp(d, zenith, xmax):
+            h = get_height_above_ground(d, zenith, observation_level=0)  # height above sea level
             tmp = self._get_atmosphere_numeric([zenith], h_low=h)
             dtmp = tmp - xmax
             return dtmp
@@ -668,9 +667,8 @@ class Atmosphere():
         zenith = np.array(zenith)
 
         # returns atmosphere between xmax and d
-        def ftmp(d, zenith, xmax, observation_level=0):
-            h = get_height_above_ground(d, zenith, observation_level=observation_level)
-            h += observation_level
+        def ftmp(d, zenith, xmax):
+            h = get_height_above_ground(d, zenith, observation_level=0)
             tmp = self._get_atmosphere_taylor(np.array([zenith]), h_low=np.array([h]))
             dtmp = tmp - xmax
             return dtmp

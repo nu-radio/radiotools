@@ -8,6 +8,7 @@ from scipy import optimize
 
 import matplotlib.pyplot as plt
 import numpy as np
+import radiotools.stats
 
 
 def get_discrete_cmap(N, base_cmap='viridis'):
@@ -170,29 +171,27 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
             tweights = np.ones_like(data)
             if weights is not None:
                 tweights = weights
-            import stats
             if quantiles:
-                q1 = stats.quantile_1d(data, tweights, 0.16)
-                q2 = stats.quantile_1d(data, tweights, 0.84)
-                median = stats.median(data, tweights)
+                q1 = radiotools.stats.quantile_1d(data, tweights, 0.16)
+                q2 = radiotools.stats.quantile_1d(data, tweights, 0.84)
+                median = radiotools.stats.median(data, tweights)
     #             median_str = serror.formatError(median, 0.05 * (np.abs(median - q2) + np.abs(median - q1)))[0]
                 textstr += "$\mathrm{median} = %.3g^{+%.2g}_{-%.2g}$\n" % (median, np.abs(median - q2),
                                                                            np.abs(median - q1))
             else:
-                textstr += "$\mathrm{median} = %.3g $\n" % stats.median(data, tweights)
+                textstr += "$\mathrm{median} = %.3g $\n" % radiotools.stats.median(data, tweights)
         if std:
             if rel:
                 textstr += "$\sigma = %.2g$ (%.1f\%%)\n" % (tstd, tstd / tmean * 100.)
             else:
                 textstr += "$\sigma = %.2g$\n" % (tstd)
     else:
-        import stat
         if(weights is None):
             w = np.ones_like(data)
         else:
             w = weights
-        q68 = stats.quantile_1d(data, weights=w, quant=.68)
-        q95 = stats.quantile_1d(data, weights=w, quant=.95)
+        q68 = radiotools.stats.quantile_1d(data, weights=w, quant=.68)
+        q95 = radiotools.stats.quantile_1d(data, weights=w, quant=.95)
         textstr += "$\sigma_\mathrm{{68}}$ = {:.1f}$^\circ$\n".format(q68)
         textstr += "$\sigma_\mathrm{{95}}$ = {:.1f}$^\circ$\n".format(q95)
 

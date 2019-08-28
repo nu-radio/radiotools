@@ -429,7 +429,7 @@ def get_2dhist_normalized_columns(X, Y, fig, ax, binsx, binsy, shading='flat', c
         the y bins
     shading: string
         fill style {'flat', 'gouraud'}, see matplotlib documentation (default flat)
-    clim: tuble, list
+    clim: tuple, list
         limits for the color axis (default (None, None))
     norm: None or Normalize instance (e.g. matplotlib.colors.LogNorm()) (default None)
         normalization of the color scale

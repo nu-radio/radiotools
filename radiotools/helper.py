@@ -69,7 +69,7 @@ def spherical_to_cartesian(zenith, azimuth):
     y = sinZenith * np.sin(azimuth)
     z = np.cos(zenith)
     if hasattr(zenith, '__len__') and hasattr(azimuth, '__len__'):
-        return np.array(zip(x, y, z))
+        return np.array([x, y, z]).T
     else:
         return np.array([x, y, z])
 

@@ -134,10 +134,10 @@ def get_distance_for_height_above_ground(h, zenith, observation_level=0):
     return (h ** 2 + 2 * r * h + r ** 2 * np.cos(zenith) ** 2) ** 0.5 - r * np.cos(zenith)
 
 
-def get_vertical_height(at, model=default_model):
-    """ input: atmosphere above in g/cm^2 [e.g. Xmax]
+def get_vertical_height(slant_depth, model=default_model):
+    """ input: atmosphere (slant depth) above in g/cm^2 [e.g. Xmax]
         output: height in m """
-    return _get_vertical_height(at * 1e4, model=model)
+    return _get_vertical_height(slant_depth * 1e4, model=model)
 
 
 def _get_vertical_height(at, model=default_model):
@@ -214,9 +214,9 @@ def get_density(h, allow_negative_heights=True, model=default_model):
 
     return y
 
-def get_density_for_distance(d, zenith, model=default_model):
+def get_density_for_distance(d, zenith, observation_level=0, model=default_model):
     """ returns the atmospheric density [g/m^3] for a given distance and zenith angle assuming a curved atmosphere"""
-    h = get_height_above_ground(d, zenith)
+    h = get_height_above_ground(d, zenith, observation_level=observation_level)
     return get_density(h, model=model)
 
 def get_density_from_barometric_formula(hh):
@@ -642,41 +642,38 @@ class Atmosphere():
         return tmp
 
     def _get_vertical_height_numeric(self, zenith, X):
-        tmp = np.zeros_like(zenith)
+        height = np.zeros_like(zenith)
         zenith = np.array(zenith)
 
         # returns atmosphere between xmax and d
-        def ftmp(d, zenith, xmax, observation_level=0):
-            h = get_height_above_ground(d, zenith, observation_level=observation_level)
-            h += observation_level
+        def ftmp(d, zenith, xmax):
+            h = get_height_above_ground(d, zenith, observation_level=0)  # height above sea level
             tmp = self._get_atmosphere_numeric([zenith], h_low=h)
             dtmp = tmp - xmax
             return dtmp
 
-        for i in xrange(len(tmp)):
-
+        for i in xrange(len(height)):
             x0 = get_distance_for_height_above_ground(self._get_vertical_height_flat(zenith[i], X[i]), zenith[i])
 
             # finding root e.g., distance for given xmax (when difference is 0)
             dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6, args=(zenith[i], X[i]))
 
-            tmp[i] = get_height_above_ground(dxmax_geo, zenith[i])
+            height[i] = get_height_above_ground(dxmax_geo, zenith[i], observation_level=0)
 
-        return tmp
+        return height
 
     def _get_vertical_height_numeric_taylor(self, zenith, X):
-        tmp = np.zeros_like(zenith)
+        height = np.zeros_like(zenith)
         zenith = np.array(zenith)
 
         # returns atmosphere between xmax and d
-        def ftmp(d, zenith, xmax, observation_level=0):
-            h = get_height_above_ground(d, zenith, observation_level=observation_level)
-            h += observation_level
+        def ftmp(d, zenith, xmax):
+            h = get_height_above_ground(d, zenith, observation_level=0)
             tmp = self._get_atmosphere_taylor(np.array([zenith]), h_low=np.array([h]))
             dtmp = tmp - xmax
             return dtmp
 
-        for i in xrange(len(tmp)):
+        for i in xrange(len(height)):
             if(X[i] < 0):
                 X[i] = 0
 
@@ -685,8 +682,9 @@ class Atmosphere():
             # finding root e.g., distance for given xmax (when difference is 0)
             dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6, args=(zenith[i], X[i]))
 
-            tmp[i] = get_height_above_ground(dxmax_geo, zenith[i])
-        return tmp
+            height[i] = get_height_above_ground(dxmax_geo, zenith[i])
+
+        return height
 
     def _get_vertical_height_flat(self, zenith, X):
         return _get_vertical_height(X * np.cos(zenith), model=self.model)

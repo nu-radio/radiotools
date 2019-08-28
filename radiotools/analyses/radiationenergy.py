@@ -23,10 +23,13 @@ def get_average_density(model=1):
         air density for a mean xmax and zenith angle (default: 1, US standard after Linsley)
 
     """
+    global average_density, used_model
+
     if average_density is not None and used_model == model:
         return average_density
     else:
         atmc = atm.Atmosphere(model=model)
+        used_model = model
         average_density = atmc.get_density(average_zenith, average_xmax) * 1e-3  # in kg/m^3
         return average_density
 

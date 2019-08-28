@@ -8,6 +8,7 @@ from scipy import optimize
 
 import matplotlib.pyplot as plt
 import numpy as np
+import radiotools.stats
 
 
 def get_discrete_cmap(N, base_cmap='viridis'):
@@ -170,7 +171,6 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
             tweights = np.ones_like(data)
             if weights is not None:
                 tweights = weights
-            import radiotools.stats
             if quantiles:
                 q1 = radiotools.stats.quantile_1d(data, tweights, 0.16)
                 q2 = radiotools.stats.quantile_1d(data, tweights, 0.84)
@@ -186,7 +186,6 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
             else:
                 textstr += "$\sigma = %.2g$\n" % (tstd)
     else:
-        import radiotools.stats
         if(weights is None):
             w = np.ones_like(data)
         else:

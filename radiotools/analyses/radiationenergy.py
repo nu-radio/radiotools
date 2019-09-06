@@ -1,3 +1,5 @@
+import functools
+
 import numpy as np
 from radiotools.atmosphere import models as atm
 
@@ -5,10 +7,9 @@ from radiotools.atmosphere import models as atm
 
 average_xmax = 669.40191244545326  # 1 EeV, 50% proton, 50% iron composition
 average_zenith = np.deg2rad(45)
-average_density = None
-used_model = None
 
 
+@functools.lru_cache(maxsize=16)
 def get_average_density(model=1):
     """ get average density
 
@@ -23,15 +24,8 @@ def get_average_density(model=1):
         air density for a mean xmax and zenith angle (default: 1, US standard after Linsley)
 
     """
-    global average_density, used_model
-
-    if average_density is not None and used_model == model:
-        return average_density
-    else:
-        atmc = atm.Atmosphere(model=model)
-        used_model = model
-        average_density = atmc.get_density(average_zenith, average_xmax) * 1e-3  # in kg/m^3
-        return average_density
+    atmc = atm.Atmosphere(model=model)
+    return atmc.get_density(average_zenith, average_xmax) * 1e-3  # in kg/m^3
 
 
 def get_clipping(dxmax):

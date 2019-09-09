@@ -2,7 +2,6 @@ import inspect, re
 import math
 import os
 from matplotlib import colors as mcolors
-from past.builtins import xrange
 
 from scipy import optimize
 
@@ -299,7 +298,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
         n2 = shape[1]
     axes = np.reshape(axes, n1 * n2)
 
-    for i in xrange(N):
+    for i in range(N):
         xlabel = ""
         if xlabels:
             if(type(xlabels) != np.str):
@@ -430,7 +429,7 @@ def make_dir(path):
 def get_marker(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
     markers = ["o", "D", "^", "s", ">"]
-    return colors[i % len(colors)] + markers[i / len(colors)]
+    return colors[i % len(colors)] + markers[i // len(colors)]
 
 def get_marker_only(i):
     markers = ["o", "D", "^", "s", ">"]

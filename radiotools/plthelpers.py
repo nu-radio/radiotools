@@ -2,7 +2,6 @@ import inspect, re
 import math
 import os
 from matplotlib import colors as mcolors
-from past.builtins import xrange
 
 from scipy import optimize
 
@@ -299,7 +298,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
         n2 = shape[1]
     axes = np.reshape(axes, n1 * n2)
 
-    for i in xrange(N):
+    for i in range(N):
         xlabel = ""
         if xlabels:
             if(type(xlabels) != np.str):

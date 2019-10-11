@@ -4,9 +4,9 @@ def get_GE_preexecution(jobname=None, rundir=None,
                         mailflags='beas',
                         ncores=1,
                         mpi=False):
-    import StringIO
+    from io import StringIO
 
-    output = StringIO.StringIO()
+    output = StringIO()
 
     output.write("#!/bin/bash\n")
     output.write("#$ -N {}\n".format(jobname))

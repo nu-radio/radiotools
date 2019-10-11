@@ -30,7 +30,7 @@ options.parallel = bool(int(options.parallel))
 options.particles = bool(int(options.particles))
 thinning = float(options.thinning)
 
-print(("RUNNR", int(options.runnumber), "                               run number"))
+print("RUNNR", int(options.runnumber), "                               run number")
 print("EVTNR   1                              number of first shower event")
 if options.parallel:
     print("PARALLEL      %f     %f   1   F" % (1000., options.pcut * float(options.energy)))

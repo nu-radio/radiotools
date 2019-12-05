@@ -705,8 +705,8 @@ class Atmosphere():
 #         dxmax_geo = self._get_distance_xmax_geometric(xmax, observation_level=0)
 #         return self._get_density_for_distance(dxmax_geo)
 
-    def _get_density_for_distance(self, d, zenith):
-        h = get_height_above_ground(d, zenith)
+    def _get_density_for_distance(self, d, zenith, observation_level=0):
+        h = get_height_above_ground(d, zenith, observation_level)
         return get_density(h, model=self.model)
 
     def get_distance_xmax(self, zenith, xmax, observation_level=1564.):

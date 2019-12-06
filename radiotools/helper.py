@@ -100,8 +100,8 @@ def get_angle(v1, v2):
     mask2 = arccos < -1
     mask = np.logical_or(mask1, mask2)
     if (type(mask) != np.bool_):
-        arccos[mask] = 1
-        arccos[mask] = -1
+        arccos[mask1] = 1
+        arccos[mask2] = -1
     else:
         if (mask):
             arccos = 1
@@ -147,7 +147,7 @@ def get_magnetic_field_vector(site=None):
     """
     magnetic_fields = {'auger': np.array([0.00871198, 0.19693423, 0.1413841]),
                        'mooresbay': np.array([0.058457, -0.09042, 0.61439]),
-                       'summit': np.array([-.037467, 0.075575, -0.539887]), # Summit station, Greenland
+                       'summit': np.array([-.037467, 0.075575, -0.539887]),  # Summit station, Greenland
                        'southpole': np.array([-0.14390398, 0.08590658, 0.52081228])}  # position of SP arianna station
     if site is None:
         site = 'auger'
@@ -682,6 +682,7 @@ def linreg(x, y):
     a = m_y - b * m_x  # zero-offset
 
     return(a, b)
+
 
 def pretty_time_delta(seconds):
     seconds = int(seconds)

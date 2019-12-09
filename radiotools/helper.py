@@ -103,8 +103,10 @@ def get_angle(v1, v2):
         arccos[mask1] = 1
         arccos[mask2] = -1
     else:
-        if (mask):
+        if (mask1):
             arccos = 1
+        if (mask2):
+            arccos = -1
     return np.arccos(arccos)
 
 

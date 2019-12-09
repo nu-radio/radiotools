@@ -94,6 +94,20 @@ def cartesian_to_spherical(x, y, z):
 
 
 def get_angle(v1, v2):
+    """
+    Calculates the angle between two vectors.
+    
+    Parameters
+    ----------
+    v1: 3d array or list of 3d arrays
+        vector(s) one
+    v2: 3d array
+        vector two
+        
+    Returns: float or list of floats
+        angle(s) between vector(s)
+    """
+
     arccos = np.dot(v1, v2) / (np.linalg.norm(v1.T, axis=0) * np.linalg.norm(v2.T, axis=0))
     # catch numerical overlow
     mask1 = arccos > 1

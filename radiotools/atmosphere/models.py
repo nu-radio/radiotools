@@ -705,8 +705,8 @@ class Atmosphere():
 #         dxmax_geo = self._get_distance_xmax_geometric(xmax, observation_level=0)
 #         return self._get_density_for_distance(dxmax_geo)
 
-    def _get_density_for_distance(self, d, zenith):
-        h = get_height_above_ground(d, zenith)
+    def _get_density_for_distance(self, d, zenith, observation_level=0):
+        h = get_height_above_ground(d, zenith, observation_level)
         return get_density(h, model=self.model)
 
     def get_distance_xmax(self, zenith, xmax, observation_level=1564.):
@@ -733,6 +733,18 @@ class Atmosphere():
     def _get_distance_xmax_geometric(self, zenith, xmax, observation_level=1564.):
         h = self._get_vertical_height(zenith, xmax) - observation_level
         return get_distance_for_height_above_ground(h, zenith, observation_level)
+
+
+    def get_xmax_from_distance(self, distance, zenith, observation_level=1564.):
+        """ input:
+            - distance to xmax in m
+            - zenith in radians
+            output: xmax g/cm^2
+        """
+        h_xmax = get_height_above_ground(distance, zenith, observation_level) + observation_level
+        return self.get_atmosphere(zenith, h_low=observation_level) - \
+               self.get_atmosphere(zenith, h_low=observation_level, h_up=h_xmax)
+
 
 #     def __get_distance_xmax_geometric_flat(self, xmax, observation_level=1564.):
 # #         _get_vertical_height(xmax, self.model)

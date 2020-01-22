@@ -1,5 +1,4 @@
 import numpy as np
-from NuRadioReco.utilities import units
 import matplotlib
 import matplotlib.pyplot as plt
 import pickle
@@ -57,12 +56,12 @@ parser.add_argument('--sigma_log_energy',
 args = parser.parse_args()
 input_file =args.input_file
 n_events = args.n_events
-min_energy = args.min_energy*units.eV
-max_energy = args.max_energy*units.eV
+min_energy = args.min_energy
+max_energy = args.max_energy
 spectral_index = args.spectral_index
-min_zenith = args.min_zenith * units.deg
-max_zenith = args.max_zenith * units.deg
-sigma_angle = args.sigma_angle*units.deg
+min_zenith = args.min_zenith * np.pi / 180.
+max_zenith = args.max_zenith * np.pi / 180.
+sigma_angle = args.sigma_angle * np.pi / 180.
 sigma_log_energy = args.sigma_log_energy
 
 def calculate_chi_square(event_info, zenith, azimuth, energy):
@@ -74,7 +73,7 @@ def calculate_chi_square(event_info, zenith, azimuth, energy):
 
 
 zeniths = np.arccos(np.random.uniform(np.cos(max_zenith), np.cos(min_zenith), n_events))
-azimuths = np.random.uniform(0, 360, n_events) * units.deg
+azimuths = np.random.uniform(0, 360, n_events) /180.*np.pi
 energies = np.power((np.abs(np.power(max_energy, (spectral_index+1.)) - np.power(min_energy, (spectral_index+1.)))*np.random.uniform(0,1, n_events)), (1./(spectral_index+1.)))
 event_props_list = pickle.load(open(input_file, 'br'))
 
@@ -98,7 +97,7 @@ found_azimuths = np.array(found_azimuths)
 
 fig1 = plt.figure(figsize=(8,8))
 ax1_1 = fig1.add_subplot(223, projection = 'polar')
-direction_scatter = ax1_1.scatter(found_azimuths, found_zeniths/units.deg, alpha=.5, s=25, c=np.log10(found_energies), cmap='YlOrRd')
+direction_scatter = ax1_1.scatter(found_azimuths, found_zeniths * 180. / np.pi, alpha=.5, s=25, c=np.log10(found_energies), cmap='YlOrRd')
 direction_scatter_cbar = plt.colorbar(direction_scatter, ax=ax1_1)
 direction_scatter_cbar.set_label(r'$log_{10}(\frac{E}{eV})$')
 ax1_1.set_facecolor('silver')
@@ -115,16 +114,16 @@ ax1_2.legend()
 ax1_2.set_xlabel('E [eV]')
 ax1_2.set_ylabel('$p(E)$')
 ax1_3 = fig1.add_subplot(221)
-ax1_3.hist(found_zeniths/units.deg, bins = np.arange(0,90,5), edgecolor='k', density=True, label='found events')
-ax1_3.hist(zeniths/units.deg, bins = np.arange(0,90,5), density=True, histtype='step', label='generated zeniths')
-plot_theta = np.arange(min_zenith, max_zenith, 1.*units.deg)
-ax1_3.plot(plot_theta/units.deg, units.deg*np.sin(plot_theta)/(np.cos(min_zenith) - np.cos(max_zenith)), c='k', linestyle='--', label='target distribution')
+ax1_3.hist(found_zeniths* 180./np.pi, bins = np.arange(0,90,5), edgecolor='k', density=True, label='found events')
+ax1_3.hist(zeniths*180./np.pi, bins = np.arange(0,90,5), density=True, histtype='step', label='generated zeniths')
+plot_theta = np.arange(min_zenith, max_zenith, 180./np.pi)
+ax1_3.plot(plot_theta*180./np.pi, np.pi/180.*np.sin(plot_theta)/(np.cos(min_zenith) - np.cos(max_zenith)), c='k', linestyle='--', label='target distribution')
 ax1_3.legend()
 ax1_3.set_xlabel(r'$\theta [^{\circ}]$')
 ax1_3.set_ylabel(r'$p(\theta)$')
 ax1_4 = fig1.add_subplot(222)
-ax1_4.hist(found_azimuths/units.deg, bins=np.arange(0,360,15), edgecolor='k', density=True, label='found events')
-ax1_4.hist(azimuths/units.deg, bins=np.arange(0,360,15), density=True, histtype='step', label='generated azimuths')
+ax1_4.hist(found_azimuths*180./np.pi, bins=np.arange(0,360,15), edgecolor='k', density=True, label='found events')
+ax1_4.hist(azimuths*180/np.pi, bins=np.arange(0,360,15), density=True, histtype='step', label='generated azimuths')
 ax1_4.plot([0,360], [1./360, 1./360], c='k', linestyle='--', label='target distribution')
 ax1_4.legend()
 ax1_4.set_xlabel(r'$\phi [^{\circ}]$')
@@ -143,7 +142,7 @@ ax2_1.grid()
 corr_bbox = dict(facecolor='white', alpha=.5)
 fig3 = plt.figure(figsize=(6, 8))
 ax3_1 = fig3.add_subplot(311)
-ax3_1.scatter(found_azimuths/units.deg, found_zeniths/units.deg)
+ax3_1.scatter(found_azimuths*180./np.pi, found_zeniths*180./np.pi)
 ax3_1.grid()
 covar1 = np.cov(found_azimuths, found_zeniths)
 ax3_1.text(.03,.9, 'Correlation: {:.2f}'.format(covar1[0][1]/np.sqrt(covar1[0][0]*covar1[1][1])), transform=ax3_1.transAxes, bbox=corr_bbox)
@@ -151,7 +150,7 @@ ax3_1.set_xlabel(r'$\phi [^\circ]$')
 ax3_1.set_ylabel(r'$\theta [^\circ]$')
 
 ax3_2 = fig3.add_subplot(312)
-ax3_2.scatter(found_zeniths/units.deg, np.log10(found_energies))
+ax3_2.scatter(found_zeniths*180./np.pi, np.log10(found_energies))
 ax3_2.grid()
 covar2 = np.cov(found_zeniths, np.log10(found_energies))
 ax3_2.text(.03,.9, 'Correlation: {:.2f}'.format(covar2[0][1]/np.sqrt(covar2[0][0]*covar2[1][1])), transform=ax3_2.transAxes, bbox=corr_bbox)
@@ -159,7 +158,7 @@ ax3_2.set_xlabel(r'$\theta [^\circ]$')
 ax3_2.set_ylabel(r'$log_{10}(E[eV])$')
 
 ax3_3 = fig3.add_subplot(313)
-ax3_3.scatter(found_azimuths/units.deg, np.log10(found_energies))
+ax3_3.scatter(found_azimuths*180./np.pi, np.log10(found_energies))
 ax3_3.grid()
 covar3 = np.cov(found_azimuths, np.log10(found_energies))
 ax3_3.text(.03,.9, 'Correlation: {:.2f}'.format(covar3[0][1]/np.sqrt(covar3[0][0]*covar3[1][1])), transform=ax3_3.transAxes, bbox=corr_bbox)

@@ -1,10 +1,26 @@
 import pickle
 import h5py
 import glob
-from NuRadioReco.modules.io.coreas.coreas import get_angles
-from NuRadioReco.utilities import units
 import numpy as np
 import argparse
+import radiotools.helper as hp
+
+def get_angles(corsika):
+    """
+    Converting angles in corsika coordinates to local coordinates
+    """
+    zenith = np.deg2rad(corsika['inputs'].attrs["THETAP"][0])
+    azimuth = hp.get_normalized_angle(3 * np.pi / 2. + np.deg2rad(corsika['inputs'].attrs["PHIP"][0]))
+
+    Bx, Bz = corsika['inputs'].attrs["MAGNET"]
+    B_inclination = np.arctan2(Bz, Bx)
+
+    B_strength = (Bx ** 2 + Bz ** 2) ** 0.5
+
+    # in local coordinates north is + 90 deg
+    magnetic_field_vector = B_strength * hp.spherical_to_cartesian(np.pi * 0.5 + B_inclination, 0 + np.pi * 0.5)
+
+    return zenith, azimuth, magnetic_field_vector
 
 
 parser = argparse.ArgumentParser(description='Creates a table of event properties for the generate_event.py script to use')
@@ -40,7 +56,7 @@ for folder in folders:
     for file in files:
         corsika = h5py.File(file, 'r')
         if len(corsika['CoREAS']['observers'].values()) >= min_number_of_stations:
-            cr_energy = corsika['inputs'].attrs['ERANGE'][0]*units.GeV
+            cr_energy = corsika['inputs'].attrs['ERANGE'][0] * 1.e9
             zenith, azimuth, magnetic_field_vector = get_angles(corsika)
             prop_list.append(np.array([file, cr_energy, zenith, azimuth]))
         i_used_files += 1

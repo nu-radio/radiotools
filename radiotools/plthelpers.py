@@ -368,7 +368,7 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
     """ creates a histogram using matplotlib from array """
     if(ax is None):
         if figsize is None:
-            fig, ax1 = plt.subplots(1, 1)
+            fig, ax1 = plt.subplots(1, 1, figsize=(6, 6))
         else:
             fig, ax1 = plt.subplots(1, 1, figsize=figsize)
     else:
@@ -430,6 +430,7 @@ def get_marker(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
     markers = ["o", "D", "^", "s", ">"]
     return colors[i % len(colors)] + markers[i // len(colors)]
+
 
 def get_marker_only(i):
     markers = ["o", "D", "^", "s", ">"]

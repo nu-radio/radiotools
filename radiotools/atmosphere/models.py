@@ -216,7 +216,7 @@ def get_density(h, allow_negative_heights=True, model=default_model):
 
 def get_density_for_distance(d, zenith, observation_level=0, model=default_model):
     """ returns the atmospheric density [g/m^3] for a given distance and zenith angle assuming a curved atmosphere"""
-    h = get_height_above_ground(d, zenith, observation_level=observation_level)
+    h = get_height_above_ground(d, zenith, observation_level=observation_level) + observation_level
     return get_density(h, model=model)
 
 def get_density_from_barometric_formula(hh):

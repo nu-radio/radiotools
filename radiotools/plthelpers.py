@@ -7,6 +7,7 @@ from scipy import optimize
 
 import matplotlib.pyplot as plt
 import numpy as np
+import radiotools.stats
 
 
 def get_discrete_cmap(N, base_cmap='viridis'):
@@ -169,29 +170,27 @@ def plot_hist_stats(ax, data, weights=None, posx=0.05, posy=0.95, overflow=None,
             tweights = np.ones_like(data)
             if weights is not None:
                 tweights = weights
-            import stats
             if quantiles:
-                q1 = stats.quantile_1d(data, tweights, 0.16)
-                q2 = stats.quantile_1d(data, tweights, 0.84)
-                median = stats.median(data, tweights)
+                q1 = radiotools.stats.quantile_1d(data, tweights, 0.16)
+                q2 = radiotools.stats.quantile_1d(data, tweights, 0.84)
+                median = radiotools.stats.median(data, tweights)
     #             median_str = serror.formatError(median, 0.05 * (np.abs(median - q2) + np.abs(median - q1)))[0]
                 textstr += "$\mathrm{median} = %.3g^{+%.2g}_{-%.2g}$\n" % (median, np.abs(median - q2),
                                                                            np.abs(median - q1))
             else:
-                textstr += "$\mathrm{median} = %.3g $\n" % stats.median(data, tweights)
+                textstr += "$\mathrm{median} = %.3g $\n" % radiotools.stats.median(data, tweights)
         if std:
             if rel:
                 textstr += "$\sigma = %.2g$ (%.1f\%%)\n" % (tstd, tstd / tmean * 100.)
             else:
                 textstr += "$\sigma = %.2g$\n" % (tstd)
     else:
-        import stat
         if(weights is None):
             w = np.ones_like(data)
         else:
             w = weights
-        q68 = stats.quantile_1d(data, weights=w, quant=.68)
-        q95 = stats.quantile_1d(data, weights=w, quant=.95)
+        q68 = radiotools.stats.quantile_1d(data, weights=w, quant=.68)
+        q95 = radiotools.stats.quantile_1d(data, weights=w, quant=.95)
         textstr += "$\sigma_\mathrm{{68}}$ = {:.1f}$^\circ$\n".format(q68)
         textstr += "$\sigma_\mathrm{{95}}$ = {:.1f}$^\circ$\n".format(q95)
 
@@ -299,7 +298,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
         n2 = shape[1]
     axes = np.reshape(axes, n1 * n2)
 
-    for i in xrange(N):
+    for i in range(N):
         xlabel = ""
         if xlabels:
             if(type(xlabels) != np.str):
@@ -409,6 +408,7 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
         return fig, ax1
 
 
+
 def get_2dhist_normalized_columns(X, Y, fig, ax, binsx, binsy, shading='flat', clim=(None, None), norm=None, cmap=None):
     """
     creates a 2d histogram where the number of entries are normalized to 1 per column
@@ -455,10 +455,108 @@ def get_2dhist_normalized_columns(X, Y, fig, ax, binsx, binsy, shading='flat', c
 
     return pc, cb
 
+
+def get_histogram2d(x=None, y=None, z=None,
+                bins=10, range=None,
+                xscale="linear", yscale="linear", cscale="linear",
+                normed=False, cmap=None, clim=(None, None),
+                ax1=None, grid=True, shading='flat', colorbar={},
+                cbi_kwargs={'orientation': 'vertical'},
+                xlabel="", ylabel="", clabel="", title="",
+                fname="hist2d.png"):
+    """
+    creates a 2d histogram
+
+    Parameters
+    ----------
+    x, y, z :
+        x and y coordinaten for z value, if z is None the 2d histogram of x and z is calculated
+
+    numpy.histogram2d parameters:
+        range : array_like, shape(2,2), optional
+        bins : int or array_like or [int, int] or [array, array], optional
+
+    ax1: mplt.axes
+        if None (default) a olt.figure is created and histogram is stored
+        if axis is give, the axis and a pcolormesh object is returned
+
+    colorbar : dict
+
+    plt.pcolormesh parameters:
+        clim=(vmin, vmax) : scalar, optional, default: clim=(None, None)
+        shading : {'flat', 'gouraud'}, optional
+
+    normed: string
+        colum, row, colum1, row1 (default: None)
+
+    {x,y,c}scale: string
+        'linear', 'log' (default: 'linear')
+
+
+    """
+
+    if z is None and (x is None or y is None):
+        sys.exit("z and (x or y) are all None")
+
+    if ax1 is None:
+        fig, ax = plt.subplots(1)
+        fig.subplots_adjust(wspace=0.3, left=0.05, right=0.95)
+    else:
+        ax = ax1
+
+    if z is None:
+        z, xedges, yedges = np.histogram2d(x, y, bins=bins, range=range)
+        z = z.T
+    else:
+        xedges, yedges = x, y
+
+    if normed:
+        if normed == "colum":
+            z = z / np.sum(z, axis=0)
+        elif normed == "row":
+            z = z / np.sum(z, axis=1)[:, None]
+        elif normed == "colum1":
+            z = z / np.amax(z, axis=0)
+        elif normed == "row1":
+            z = z / np.amax(z, axis=1)[:, None]
+        else:
+            sys.exit("Normalisation %s is not known.")
+
+
+    color_norm = mpl.colors.LogNorm() if cscale == "log" else None
+    vmin, vmax = clim
+    im = ax.pcolormesh(xedges, yedges, z, shading=shading, vmin=vmin, vmax=vmax, norm=color_norm, cmap=cmap)
+
+    if colorbar is not None:
+        cbi = plt.colorbar(im, **cbi_kwargs)
+        cbi.ax.tick_params(axis='both', **{"labelsize": 30})
+        cbi.set_label(clabel)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+    ax.set_xscale(xscale)
+    ax.set_yscale(yscale)
+
+    ax.set_title(title)
+
+    if ax1 is None:
+        save_histogram(fig, fname)
+    else:
+        return ax, im
+
+
+
 def save_histogram(filename, *args, **kwargs):
     fig, ax = get_histogram(*args, **kwargs)
     fig.savefig(filename)
     plt.close(fig)
+
+
+def get_subplot(figsize=None):
+        fig, ax = plt.subplots(1, figsize=figsize)
+        fig.subplots_adjust(wspace=0.3, left=0.05, right=0.95)
+        return fig, ax
 
 
 def varname(p):
@@ -476,7 +574,7 @@ def make_dir(path):
 def get_marker(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
     markers = ["o", "D", "^", "s", ">"]
-    return colors[i % len(colors)] + markers[i / len(colors)]
+    return colors[i % len(colors)] + markers[i // len(colors)]
 
 def get_marker_only(i):
     markers = ["o", "D", "^", "s", ">"]

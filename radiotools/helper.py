@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function  # , unicode_literals
-from past.builtins import xrange
 import numpy as np
 
 
@@ -70,7 +69,7 @@ def spherical_to_cartesian(zenith, azimuth):
     y = sinZenith * np.sin(azimuth)
     z = np.cos(zenith)
     if hasattr(zenith, '__len__') and hasattr(azimuth, '__len__'):
-        return np.array(zip(x, y, z))
+        return np.array([x, y, z]).T
     else:
         return np.array([x, y, z])
 
@@ -95,17 +94,33 @@ def cartesian_to_spherical(x, y, z):
 
 
 def get_angle(v1, v2):
+    """
+    Calculates the angle between two vectors.
+    
+    Parameters
+    ----------
+    v1: 3d array or list of 3d arrays
+        vector(s) one
+    v2: 3d array
+        vector two
+        
+    Returns: float or list of floats
+        angle(s) between vector(s)
+    """
+
     arccos = np.dot(v1, v2) / (np.linalg.norm(v1.T, axis=0) * np.linalg.norm(v2.T, axis=0))
     # catch numerical overlow
     mask1 = arccos > 1
     mask2 = arccos < -1
     mask = np.logical_or(mask1, mask2)
     if (type(mask) != np.bool_):
-        arccos[mask] = 1
-        arccos[mask] = -1
+        arccos[mask1] = 1
+        arccos[mask2] = -1
     else:
-        if (mask):
+        if (mask1):
             arccos = 1
+        if (mask2):
+            arccos = -1
     return np.arccos(arccos)
 
 
@@ -137,7 +152,7 @@ def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
 
 
 def get_declination(magnetic_field_vector):
-    declination = np.arccos(np.dot(np.array([0, 1]), magnetic_field_vector[:2] / 
+    declination = np.arccos(np.dot(np.array([0, 1]), magnetic_field_vector[:2] /
                                    np.linalg.norm(magnetic_field_vector[:2])))
     return declination
 
@@ -148,6 +163,7 @@ def get_magnetic_field_vector(site=None):
     """
     magnetic_fields = {'auger': np.array([0.00871198, 0.19693423, 0.1413841]),
                        'mooresbay': np.array([0.058457, -0.09042, 0.61439]),
+                       'summit': np.array([-.037467, 0.075575, -0.539887]),  # Summit station, Greenland
                        'southpole': np.array([-0.14390398, 0.08590658, 0.52081228])}  # position of SP arianna station
     if site is None:
         site = 'auger'
@@ -239,7 +255,7 @@ def get_interval(trace, scale=0.5):
     h_max = h.max()
     up_pos = max_pos
     low_pos = max_pos
-    for i in xrange(max_pos, n_samples):
+    for i in range(max_pos, n_samples):
         if (h[i] < h_max * scale):
             up_pos = i
             break
@@ -320,7 +336,7 @@ def get_angle_to_efieldexpectation_in_showerplane(efield, core, zenith, azimuth,
         if (efield_transformed[0] > 0):
             efield_transformed *= -1.
     else:
-        for i in xrange(len(efield_transformed)):
+        for i in range(len(efield_transformed)):
             if (efield_transformed[i][0] > 0):
                 efield_transformed[i] *= -1.
 
@@ -341,7 +357,7 @@ def get_angle_to_efieldexpectation_in_showerplane(efield, core, zenith, azimuth,
         while (diff < -np.pi):
             diff += 2 * np.pi
     else:
-        for i in xrange(len(diff)):
+        for i in range(len(diff)):
             while (diff[i] > np.pi):
                 diff[i] -= 2 * np.pi
             while (diff[i] < -np.pi):
@@ -381,7 +397,7 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
         [[xx_error ** 2, xx_error * yy_error * xy_correlation], [xx_error * yy_error * xy_correlation, yy_error ** 2]])
     p = multivariate_normal.pdf([x, y], mean=[xx, yy], cov=cov)
     denom = (2 * np.pi * xx_error * yy_error * np.sqrt(1 - xy_correlation ** 2))
-    nom = np.exp(-1. / (2 * (1 - xy_correlation ** 2)) * 
+    nom = np.exp(-1. / (2 * (1 - xy_correlation ** 2)) *
                  ((x - xx) ** 2 / xx_error ** 2 + (y - yy) ** 2 / yy_error ** 2 - 2 * xy_correlation * (x - xx) * (
                      y - yy) / (xx_error * yy_error)))
     if sigma:
@@ -656,32 +672,33 @@ def get_normalized_xcorr(trace1, trace2, mode='full'):
 
 def linreg(x, y):
     '''
-    Linear regression: returns the offset a and slope b for the function y_lin(x) = a + b*x 
-    that approximates the distribtion y(x) the best (sum of squares of residuals is minimized). 
-    
+    Linear regression: returns the offset a and slope b for the function y_lin(x) = a + b*x
+    that approximates the distribtion y(x) the best (sum of squares of residuals is minimized).
+
     input:
         x: array-like, values where y-values are valid
         y: array-like, must have same length as x, values y(x)
-        
+
     output:
         a = offset of linear function resulting from regression
         b = slope of linear function resulting from regression
-    ''' 
-    # number of observations/points 
-    n = np.size(x) 
-  
-    # mean of x and y vector 
-    m_x, m_y = np.mean(x), np.mean(y) 
-  
-    # calculating cross-deviation and deviation about x 
-    SS_xy = np.sum(y * x) - n * m_y * m_x 
-    SS_xx = np.sum(x * x) - n * m_x * m_x 
-  
-    # calculating regression coefficients 
-    b = SS_xy / SS_xx  # slope 
+    '''
+    # number of observations/points
+    n = np.size(x)
+
+    # mean of x and y vector
+    m_x, m_y = np.mean(x), np.mean(y)
+
+    # calculating cross-deviation and deviation about x
+    SS_xy = np.sum(y * x) - n * m_y * m_x
+    SS_xx = np.sum(x * x) - n * m_x * m_x
+
+    # calculating regression coefficients
+    b = SS_xy / SS_xx  # slope
     a = m_y - b * m_x  # zero-offset
-  
-    return(a, b) 
+
+    return(a, b)
+
 
 def pretty_time_delta(seconds):
     seconds = int(seconds)

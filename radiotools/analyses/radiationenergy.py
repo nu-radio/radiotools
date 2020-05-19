@@ -1,3 +1,5 @@
+import functools
+
 import numpy as np
 from radiotools.atmosphere import models as atm
 
@@ -5,8 +7,25 @@ from radiotools.atmosphere import models as atm
 
 average_xmax = 669.40191244545326  # 1 EeV, 50% proton, 50% iron composition
 average_zenith = np.deg2rad(45)
-atmc = atm.Atmosphere(model=1)
-average_density = atmc.get_density(average_zenith, average_xmax) * 1e-3  # in kg/m^3
+
+
+@functools.lru_cache(maxsize=16)
+def get_average_density(model=1):
+    """ get average density
+
+    Parameters
+    ----------
+    model : int
+        atmospheric model
+
+    Returns
+    -------
+    float
+        air density for a mean xmax and zenith angle (default: 1, US standard after Linsley)
+
+    """
+    atmc = atm.Atmosphere(model=model)
+    return atmc.get_density(average_zenith, average_xmax) * 1e-3  # in kg/m^3
 
 
 def get_clipping(dxmax):
@@ -39,7 +58,7 @@ def get_a(rho):
     float
         relative charge excess strength a
     """
-    return -0.23604683 + 0.43426141 * np.exp(1.11141046 * (rho - average_density))
+    return -0.23604683 + 0.43426141 * np.exp(1.11141046 * (rho - get_average_density()))
 
 
 def get_a_zenith(zenith):
@@ -56,7 +75,7 @@ def get_a_zenith(zenith):
         relative charge excess strength a
     """
     rho = atmc.get_density(zenith, average_xmax) * 1e-3
-    return -0.24304254 + 0.4511355 * np.exp(1.1380946 * (rho - average_density))
+    return -0.24304254 + 0.4511355 * np.exp(1.1380946 * (rho - get_average_density()))
 
 
 def get_S(Erad, sinalpha, density, p0=0.250524463912, p1=-2.95290494,
@@ -79,7 +98,7 @@ def get_S(Erad, sinalpha, density, p0=0.250524463912, p1=-2.95290494,
     """
     a = get_a(density) * b_scale ** (-0.5 * b)
     return Erad / (a ** 2 + (1 - a ** 2) * sinalpha ** 2 * b_scale ** b) / \
-            (1 - p0 + p0 * np.exp(p1 * (density - average_density))) ** 2
+            (1 - p0 + p0 * np.exp(p1 * (density - get_average_density()))) ** 2
 
 
 def get_S_zenith(erad, sinalpha, zeniths, b_scale=1., p0=0.239, p1=-3.13):
@@ -123,9 +142,4 @@ def get_radiation_energy(Srd, sinalpha, density, p0=0.250524463912,
     """
     a = get_a(density) * b_scale ** (-0.5 * b)
     return Srd * (a ** 2 + (1 - a ** 2) * sinalpha ** 2 * b_scale ** b) * \
-            (1 - p0 + p0 * np.exp(p1 * (density - average_density))) ** 2
-
-
-
-
-
+            (1 - p0 + p0 * np.exp(p1 * (density - get_average_density()))) ** 2

@@ -409,6 +409,53 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
 
 
 
+def get_2dhist_normalized_columns(X, Y, fig, ax, binsx, binsy, shading='flat', clim=(None, None), norm=None, cmap=None):
+    """
+    creates a 2d histogram where the number of entries are normalized to 1 per column
+
+    Parameters
+    ----------
+    X: array
+        x values
+    Y: array
+        y values
+    fig: figure instance
+        the figure to plot in
+    ax: axis instance
+        the axis to plot in
+    binsx: array
+        the x bins
+    binsy: array
+        the y bins
+    shading: string
+        fill style {'flat', 'gouraud'}, see matplotlib documentation (default flat)
+    clim: tuple, list
+        limits for the color axis (default (None, None))
+    norm: None or Normalize instance (e.g. matplotlib.colors.LogNorm()) (default None)
+        normalization of the color scale
+    cmap: string or None
+        the name of the colormap
+
+    Returns
+    --------
+    pcolormesh object, colorbar object
+    """
+    H, xedges, yedges = np.histogram2d(X, Y, bins=[binsx, binsy])
+    np.nan_to_num(H)
+#         Hmasked = np.ma.masked_where(H==0,H) # Mask pixels with a value of zero
+    Hmasked = H
+    H_norm_rows = Hmasked / np.outer(Hmasked.sum(axis=1, keepdims=True), np.ones(H.shape[1]))
+
+    if(cmap is not None):
+        cmap = plt.get_cmap(cmap)
+
+    vmin, vmax = clim
+    pc = ax.pcolormesh(xedges, yedges, H.T, shading=shading, vmin=vmin, vmax=vmax , norm=norm, cmap=cmap)
+    cb = fig.colorbar(pc, ax=ax, orientation='vertical')
+
+    return pc, cb
+
+
 def get_histogram2d(x=None, y=None, z=None,
                 bins=10, range=None,
                 xscale="linear", yscale="linear", cscale="linear",
@@ -497,6 +544,7 @@ def get_histogram2d(x=None, y=None, z=None,
         save_histogram(fig, fname)
     else:
         return ax, im
+
 
 
 def save_histogram(filename, *args, **kwargs):

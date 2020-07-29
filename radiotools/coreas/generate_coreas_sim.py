@@ -6,7 +6,6 @@ from radiotools import coordinatesystems
 from radiotools import helper as hp
 from past.builtins import xrange
 
-
 # $_CONDOR_SCRATCH_DIR
 
 
@@ -41,7 +40,8 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
              particles=True,
              parallel=False, parallel_cut=1e-2,
              B=[19.71, -14.18], thinning=1e-6, ecuts=[1.000E-01, 5.000E-02, 2.500E-04, 2.500E-04],
-             stepfc=1):
+             stepfc=1,
+             hdf5_converter_arguments=""):
     scratchdir = '$TMPDIR/glaser/%i/%i/' % (int(event_number), int(particle_type))
     fout = open(filename, 'w')
     if pre_executionscript is not None:
@@ -98,7 +98,7 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
     if (int(particle_type) == 5626):
         particle_identifier = "Fe"
 #     fout.write('\tpython {0} -s -d $RUNNR -o {1} --particle-type {2}\n'.format(executable, os.path.join(output_dir, "../pickle"), particle_identifier))
-    fout.write('\tpython {} $RUNNR/SIM$RUNNR.reas -o {outputdir} \n'.format(hdf5converter, outputdir=os.path.join(output_dir, "../hdf5")))
+    fout.write('\tpython {} $RUNNR/SIM$RUNNR.reas -o {outputdir} {arguments} \n'.format(hdf5converter, outputdir=os.path.join(output_dir, "../hdf5"), argument=hdf5_converter_arguments))
     if(parallel):
         # merge particle outputs in case of MPI simulation
         executable = os.path.join(os.path.dirname(corsika_executable), "..", "coast/CorsikaFileIO", "merge_corsika")
@@ -251,7 +251,6 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
                             name_gamma = "%s_gamma%i" % (name, iG)
                             fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(x, y, z, name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
     fout.close()
-
 
 # def write_list_multiple_heights(filename, zen, az, obs_level=[1564., 0.],
 #                                 inc=np.deg2rad(-35.7324), zero_height=True, r_min=0., r_max=500.,

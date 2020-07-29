@@ -60,7 +60,7 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
     fout.write('rm -rf {0}$RUNNR\n'.format(scratchdir))
     fout.write('mkdir -p {0}$RUNNR\n'.format(scratchdir))
     executable = os.path.join(radiotools_path, "radiotools", "coreas", "geninp_aera.py")
-    fout.write('{17} -r $RUNNR -s {0} -u {1} -a {2} -z {3} -t {4} -d {5}$RUNNR/ --atm {6} --conex {7} --obslevel {8} --parallel {9} --Bx {10} --Bz {11} --thinning {12} --ecuts {13} {14} {15} {16} --pcut {18} --particles {19} --stepfc {20} > {5}$RUNNR/RUN$RUNNR.inp\n'.format(seed, energy * 1e-9, 180. * azimuth / np.pi, 180 * zenith / np.pi, particle_type, scratchdir, atm, int(conex), obs_level, int(parallel), B[0], B[1], thinning, ecuts[0], ecuts[1], ecuts[2], ecuts[3], executable, parallel_cut, int(particles), stepfc))
+    fout.write('python {17} -r $RUNNR -s {0} -u {1} -a {2} -z {3} -t {4} -d {5}$RUNNR/ --atm {6} --conex {7} --obslevel {8} --parallel {9} --Bx {10} --Bz {11} --thinning {12} --ecuts {13} {14} {15} {16} --pcut {18} --particles {19} --stepfc {20} > {5}$RUNNR/RUN$RUNNR.inp\n'.format(seed, energy * 1e-9, 180. * azimuth / np.pi, 180 * zenith / np.pi, particle_type, scratchdir, atm, int(conex), obs_level, int(parallel), B[0], B[1], thinning, ecuts[0], ecuts[1], ecuts[2], ecuts[3], executable, parallel_cut, int(particles), stepfc))
     fout.write('cp ' + run_dir + '/SIM$RUNNR.reas {1}$RUNNR/SIM$RUNNR.reas\n'.format(event_number, scratchdir))
     fout.write('cp ' + run_dir + '/SIM$RUNNR.list {1}$RUNNR/SIM$RUNNR.list\n'.format(event_number, scratchdir))
     if (int(particle_type) == 14):

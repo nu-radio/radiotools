@@ -98,7 +98,7 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
     if (int(particle_type) == 5626):
         particle_identifier = "Fe"
 #     fout.write('\tpython {0} -s -d $RUNNR -o {1} --particle-type {2}\n'.format(executable, os.path.join(output_dir, "../pickle"), particle_identifier))
-    fout.write('\tpython {} $RUNNR/SIM$RUNNR.reas -o {outputdir} {arguments} \n'.format(hdf5converter, outputdir=os.path.join(output_dir, "../hdf5"), argument=hdf5_converter_arguments))
+    fout.write('\tpython {} $RUNNR/SIM$RUNNR.reas -o {outputdir} {arguments} \n'.format(hdf5converter, outputdir=os.path.join(output_dir, "../hdf5"), arguments=hdf5_converter_arguments))
     if(parallel):
         # merge particle outputs in case of MPI simulation
         executable = os.path.join(os.path.dirname(corsika_executable), "..", "coast/CorsikaFileIO", "merge_corsika")

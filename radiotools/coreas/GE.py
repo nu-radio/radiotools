@@ -6,7 +6,7 @@ def get_GE_preexecution(jobname=None, rundir=None,
                         mpi=False):
     from io import StringIO
 
-    output = StringIO.StringIO()
+    output = StringIO()
 
     output.write("#!/bin/bash\n")
     output.write("#$ -N {}\n".format(jobname))

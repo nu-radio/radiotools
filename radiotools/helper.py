@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function  # , unicode_literals
+from radiotools.atmosphere import models as atm
 import numpy as np
+from scipy.signal import correlate
 
 
 def linear_to_dB(linear):
@@ -63,6 +65,93 @@ def datetime_to_UTC(dt):
     return calendar.timegm(dt.timetuple())
 
 
+def get_local_zenith(pos):
+    """
+    Assumes spherical earth. Returns direction of zenith for given position "pos".
+    "pos" needs to be given in coordinate system with the origin at sea level.
+    """
+    origin = np.array([0, 0, atm.r_e])
+    return (origin + pos) / np.linalg.norm(origin + pos)
+
+
+def get_local_altitude(pos):
+    """
+    Assumes spherical earth. Returns height above sea level for position "pos".
+    "pos" needs to be given in coordinate system with the origin at sea level.
+    """
+    pos_tot = np.array([0, 0, atm.r_e]) + pos
+    return np.linalg.norm(pos_tot - get_local_zenith(pos) * atm.r_e)
+
+
+def get_local_zenith_angle(psource, preciever):
+    """
+    Assumes spherical earth. Returns zenith angle under which a reciever (preciever) sees a source (psource).
+    "preciever" and "psource" have to be in the same coordinate system with the origin at sea level.
+    """
+    local_zenith = get_local_zenith(preciever)
+    line = psource - preciever
+    return get_angle(local_zenith, line)
+
+
+def get_intersection_between_circle_and_line(r, b, c):
+    """
+    solution from: https://cp-algorithms.com/geometry/circle-line-intersection.html
+    """
+    a = 1  # without loss of generality set a to 1
+    eps = 1.e-6
+    r0 = (a ** 2 + b ** 2)
+    x0 = -a * c / r0
+    y0 = -b * c / r0
+    if c ** 2 > r ** 2 * r0 + eps:
+        # no intersection
+        return 0, 0
+    elif np.abs(c ** 2 - r ** 2 * r0) < eps:
+        # one intersection
+        return x0, y0
+    else:
+        # two intersections
+        d = r ** 2 - c ** 2 / r0
+        mult = np.sqrt(d / r0)
+        return x0 + b * mult, y0 - a * mult, x0 - b * mult, y0 + a * mult
+
+
+def get_zenith_angle_at_earth(zenith, station_level):
+
+    r_e = atm.r_e
+    coors = get_intersection_between_circle_and_line(r_e, -np.tan(zenith), (r_e + station_level) * np.tan(zenith))
+
+    if len(coors) > 2:
+        if coors[1] > coors[3]:
+            x, y = coors[0], coors[1]
+        else:
+            x, y = coors[2], coors[3]
+
+        if 0:
+            from matplotlib import pyplot as plt
+            earth = spherical_to_cartesian(zenith=np.linspace(0, np.pi * 2, 1000), azimuth=0) * atm.r_e
+            xs = np.linspace(-r_e * 0.5, r_e * 0.5)
+            line = xs / np.tan(zenith) + r_e + station_level
+
+            lot1 = np.array([0, 0, 1]) * np.linspace(0, atm.r_e + station_level + 1000)[:, None]
+            lot2 = np.array([x, 0, y]) / np.linalg.norm(np.array([x, 0, y])) * np.linspace(0, atm.r_e + station_level + 1000)[:, None]
+
+            plt.plot(x, y, "r*")
+            plt.plot(earth[0], earth[2])
+            plt.plot(xs, line)
+            plt.plot(lot1[:, 0], lot1[:, 2], "k--")
+            plt.plot(lot2[:, 0], lot2[:, 2], "k--")
+            plt.show()
+
+        v1 = np.array([x, 0, y])
+        distance = np.linalg.norm(v1 - np.array([0, 0, r_e + station_level]))
+        line = spherical_to_cartesian(zenith, 0)
+        local_zenith = get_angle(v1, line)
+
+        return local_zenith, distance
+    else:
+        sys.exit("Find theta at earth: Not 2 intersections")
+
+
 def spherical_to_cartesian(zenith, azimuth):
     sinZenith = np.sin(zenith)
     x = sinZenith * np.cos(azimuth)
@@ -96,14 +185,14 @@ def cartesian_to_spherical(x, y, z):
 def get_angle(v1, v2):
     """
     Calculates the angle between two vectors.
-    
+
     Parameters
     ----------
     v1: 3d array or list of 3d arrays
         vector(s) one
     v2: 3d array
         vector two
-        
+
     Returns: float or list of floats
         angle(s) between vector(s)
     """
@@ -666,7 +755,6 @@ def covariance_to_correlation(M):
 
 
 def get_normalized_xcorr(trace1, trace2, mode='full'):
-    from scipy.signal import correlate
     return correlate(trace1, trace2, mode=mode, method='auto') / (np.sum(trace1 ** 2) * np.sum(trace2 ** 2)) ** 0.5
 
 
@@ -713,43 +801,3 @@ def pretty_time_delta(seconds):
         return '%dm%ds' % (minutes, seconds)
     else:
         return '%ds' % (seconds,)
-
-
-# Test Code:
-if __name__ == "__main__":
-
-    import radiotools.HelperFunctions as hp
-
-    n = 10000
-    from radiotools.AERA import coordinates, signal_prediction
-    stations = coordinates.get_stations_CRS()
-    positions = np.array(stations.values())
-    positions_names = np.array(stations.keys())
-    de_mask = ~np.array([(x in coordinates.get_NL_stations()) for x in positions_names], dtype=np.bool)
-    AERA24_mask = np.zeros(len(positions), dtype=np.bool)
-    AERA24_mask[:23] = np.ones(23, dtype=np.bool)
-    positions = positions[de_mask & AERA24_mask]
-    positions_names = positions_names[de_mask & AERA24_mask]
-
-    delta = 500.
-
-    cores = np.array([np.random.uniform(positions[..., 0].min() - delta, positions[..., 0].max() + delta, n),
-                      np.random.uniform(positions[..., 1].min() - delta, positions[..., 1].max() + delta, n),
-                      np.zeros(n)]).T
-    # distances = np.array([np.min(np.linalg.norm(c - positions, axis=-1)) for c in cores])
-    near_AERA_mask = hp.is_confined2(cores[..., 0], cores[..., 1], positions, delta_confinement=150)
-    c = hp.is_confined2(cores[near_AERA_mask][..., 0], cores[near_AERA_mask][..., 1], positions, delta_confinement=0)
-    print(100. * np.sum(c) / len(c))
-    import matplotlib.pyplot as plt
-    plt.scatter(cores[near_AERA_mask][..., 0], cores[near_AERA_mask][..., 1])
-    plt.scatter(cores[near_AERA_mask][c][..., 0], cores[near_AERA_mask][c][..., 1])
-    plt.plot(positions[..., 0], positions[..., 1], "ok")
-    positions2 = np.array(stations.values())[~(de_mask & AERA24_mask)]
-    plt.plot(positions2[..., 0], positions2[..., 1], "ob")
-    positions2 = np.array(stations.values())[~(de_mask)]
-    plt.plot(positions2[..., 0], positions2[..., 1], "or")
-    plt.xlim(-1e3, 100)
-    plt.ylim(-1e3, 200)
-    plt.show()
-
-    pass

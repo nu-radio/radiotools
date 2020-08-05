@@ -63,7 +63,7 @@ class RefractivityTable(object):
         else:
             print("Write {} ...".format(fname))
 
-            self._distances = np.arange(-2e4, 3e5, self._distance_increment)
+            self._distances = np.arange(0, 3e5, self._distance_increment)
             self._zeniths = np.hstack([np.arccos(1 / np.linspace(1.5557238268604123, 57.2986884985499, self._number_of_zenith_bins))])  # from 50 to 89 deg
             self._refractivity_integrated_table = np.zeros((len(self._zeniths), len(self._distances)))
 

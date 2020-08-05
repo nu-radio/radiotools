@@ -263,7 +263,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
     N = len(histograms)
     if((fig is None) or (axes is None)):
         if(N == 1):
-            fig, axes = get_histogram(histograms, bins=bins, xlabel=xlabels, ylabel=ylabels, title=titles,
+            fig, axes = get_histogram(histograms[0], bins=bins, xlabel=xlabels, ylabel=ylabels, title=titles,
                                       stats=stats, weights=weights)
             return fig, axes
         elif(N <= 3):

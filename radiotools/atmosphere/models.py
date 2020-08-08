@@ -764,6 +764,10 @@ class Atmosphere():
         dxmax = self.get_distance_xmax_geometric(zenith, xmax, observation_level)
         return np.arctan(r / dxmax)
 
+    def get_radial_distane_from_viewing_angle(self, zenith, viewing_angle, xmax=600, observation_level=1564.):
+        dxmax = self.get_distance_xmax_geometric(zenith, xmax, observation_level)
+        return dxmax * np.tan(viewing_angle)
+
 #     def __get_distance_xmax_geometric_flat(self, xmax, observation_level=1564.):
 # #         _get_vertical_height(xmax, self.model)
 # #         dxmax = self._get_distance_xmax(xmax, observation_level=observation_level)

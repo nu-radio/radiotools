@@ -214,10 +214,12 @@ def get_density(h, allow_negative_heights=True, model=default_model):
 
     return y
 
+
 def get_density_for_distance(d, zenith, observation_level=0, model=default_model):
     """ returns the atmospheric density [g/m^3] for a given distance and zenith angle assuming a curved atmosphere"""
     h = get_height_above_ground(d, zenith, observation_level=observation_level) + observation_level
     return get_density(h, model=model)
+
 
 def get_density_from_barometric_formula(hh):
     """ returns the atmospheric density [g/m^3] for the height h abolve see level
@@ -301,7 +303,7 @@ class Atmosphere():
                 self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in xrange(5)]
 
             else:
-                self.d = np.zeros(self.number_of_zeniths)   # self.d = self.__calculate_d()
+                self.d = np.zeros(self.number_of_zeniths)  # self.d = self.__calculate_d()
                 self.a = self.__calculate_a()
                 np.savez(filename, a=self.a, d=self.d)
                 print("all constants calculated, exiting now... please rerun your analysis")
@@ -734,7 +736,6 @@ class Atmosphere():
         h = self._get_vertical_height(zenith, xmax) - observation_level
         return get_distance_for_height_above_ground(h, zenith, observation_level)
 
-
     def get_xmax_from_distance(self, distance, zenith, observation_level=1564.):
         """ input:
             - distance to xmax in m
@@ -745,6 +746,23 @@ class Atmosphere():
         return self.get_atmosphere(zenith, h_low=observation_level) - \
                self.get_atmosphere(zenith, h_low=observation_level, h_up=h_xmax)
 
+    def get_viewing_angle(self, zenith, r, xmax=600, observation_level=1564.):
+        """
+        calculates the viewing angle, i.e. the angle between the shower axis and the line of sight from 
+        the observer to xmax.
+        
+        Parameters
+        ----------
+        zenith: float
+            zenith angle
+        r: float
+            radial distance (distance of observer perpendicular to shower axis)
+        xmax: float
+        observation_level: float
+        """
+
+        dxmax = self.get_distance_xmax_geometric(zenith, xmax, observation_level)
+        return np.arctan(r / dxmax)
 
 #     def __get_distance_xmax_geometric_flat(self, xmax, observation_level=1564.):
 # #         _get_vertical_height(xmax, self.model)

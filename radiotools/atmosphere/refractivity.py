@@ -35,7 +35,7 @@ def n_param_ZHAireS(h):
     return 1 + a * np.exp(-b * h)
 
 
-def get_refractivity_between_to_points_numerical(p1, p2, atm_model, refractivity_at_sea_level, debug=False):
+def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivity_at_sea_level, debug=False):
     """
     Numerical calculation of the integrated refractivity between two positions along a straight line in the atmosphere.
     Takes curvature of a spherical earth into account.
@@ -346,9 +346,9 @@ class RefractivityTable(object):
         return self.get_refractivity_between_two_points_from_distance(zenith_at_earth, distance_to_earth, d2)
 
 
-    def get_refractivity_between_to_points_numerical(self, p1, p2, debug=False):
+    def get_refractivity_between_two_points_numerical(self, p1, p2, debug=False):
         """ Get numerical calculated integrated refractivity between two positions in atmosphere """
-        return get_refractivity_between_to_points_numerical(p1, p2, atm_model=self._atm_model,
+        return get_refractivity_between_two_points_numerical(p1, p2, atm_model=self._atm_model,
             refractivity_at_sea_level=self._refractivity_at_sea_level, debug=debug)
 
 
@@ -388,7 +388,7 @@ if __name__ == "__main__":
             print("Height of point in inital sys:", point_on_axis_height)
 
             for pos in positions:
-                r_num = tab.get_refractivity_between_to_points_numerical(point_on_axis, pos, debug=False)
+                r_num = tab.get_refractivity_between_two_points_numerical(point_on_axis, pos, debug=False)
                 r_tab = tab.get_refractivity_between_two_points_tabulated(point_on_axis, pos)
                 r_tab_flat = tab_flat.get_refractivity_between_two_altitudes(helper.get_local_altitude(pos), helper.get_local_altitude(point_on_axis))
 

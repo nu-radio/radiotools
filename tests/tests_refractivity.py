@@ -33,7 +33,7 @@ class RefractivityTests(unittest.TestCase):
         refractivities = []
         for dist in np.arange(1e3, 1e5, 1e4):
             point = axis * dist
-            r = tab_curved.get_refractivity_between_to_points_numerical(point, np.array([0, 0, 0]))
+            r = tab_curved.get_refractivity_between_two_points_numerical(point, np.array([0, 0, 0]))
             refractivities.append(r)
         self.assertTrue(np.allclose(refractivities, np.array([0.00030917724719699887, 0.000282667441765032, 0.0002590260410419691,
             0.00023792193761338818, 0.00021906244225125651, 0.00020218896167550733, 0.0001867273146300562, 0.00017212383567359824,

@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function  # , unicode_literals
 from radiotools.atmosphere import models as atm
 import numpy as np
+import sys
 from scipy.signal import correlate
 
 
@@ -69,6 +70,16 @@ def get_local_zenith(pos):
     """
     Assumes spherical earth. Returns direction of zenith for given position "pos".
     "pos" needs to be given in coordinate system with the origin at sea level.
+
+    Parameters
+    ------------
+    pos : array (3,)
+        coordinates in meter
+
+    Returns
+    --------
+    zenith : array (3,)
+        unity vector of local zenith
     """
     origin = np.array([0, 0, atm.r_e])
     return (origin + pos) / np.linalg.norm(origin + pos)
@@ -78,6 +89,16 @@ def get_local_altitude(pos):
     """
     Assumes spherical earth. Returns height above sea level for position "pos".
     "pos" needs to be given in coordinate system with the origin at sea level.
+
+    Parameters
+    ------------
+    pos : array (3,)
+        coordinates in meter
+
+    Returns
+    --------
+    altitude : float
+        height above ground of pos
     """
     pos_tot = np.array([0, 0, atm.r_e]) + pos
     return np.linalg.norm(pos_tot - get_local_zenith(pos) * atm.r_e)
@@ -87,6 +108,18 @@ def get_local_zenith_angle(psource, preciever):
     """
     Assumes spherical earth. Returns zenith angle under which a reciever (preciever) sees a source (psource).
     "preciever" and "psource" have to be in the same coordinate system with the origin at sea level.
+
+    Parameters
+    ------------
+    psource : array (3,)
+        coordinates in meter
+    psource : array (3,)
+        coordinates in meter
+
+    Returns
+    --------
+    zenith angle : float
+        local zenith angle of psource at preciever in rad
     """
     local_zenith = get_local_zenith(preciever)
     line = psource - preciever
@@ -96,6 +129,19 @@ def get_local_zenith_angle(psource, preciever):
 def get_intersection_between_circle_and_line(r, b, c):
     """
     solution from: https://cp-algorithms.com/geometry/circle-line-intersection.html
+    calculation in 2 dimension.
+
+    Parameters
+    ------------
+    r : float
+        circle radius in meter
+    b, c: float, float
+        line parameter
+
+    Returns
+    --------
+    x0, y0 : float, float
+        coordinates of intersection(s)
     """
     a = 1  # without loss of generality set a to 1
     eps = 1.e-6
@@ -115,12 +161,32 @@ def get_intersection_between_circle_and_line(r, b, c):
         return x0 + b * mult, y0 - a * mult, x0 - b * mult, y0 + a * mult
 
 
-def get_zenith_angle_at_earth(zenith, station_level):
+def get_zenith_angle_at_earth(zenith, observer_level):
+    """
+    Calculates intersections of a line with an anchor at an observation level and zenith angle with a spherical earth.
+    Determines distance along line between clostest intersection and the observation level and local zenith angle at that
+    intersection.
 
+    Parameters
+    ------------
+    zenith : float
+        zenith angle of line in rad
+    observer_level : float
+        observation level in meter
+
+    Returns
+    --------
+    local_zenith : float
+        local zenith angle of line at earth surface in rad
+    distance : float
+        distance between found intersection and observation level in meter
+    """
     r_e = atm.r_e
-    coors = get_intersection_between_circle_and_line(r_e, -np.tan(zenith), (r_e + station_level) * np.tan(zenith))
+    coors = get_intersection_between_circle_and_line(r_e, -np.tan(zenith), (r_e + observer_level) * np.tan(zenith))
 
+    # only accept two intersections found
     if len(coors) > 2:
+        # take the closer one
         if coors[1] > coors[3]:
             x, y = coors[0], coors[1]
         else:
@@ -130,10 +196,10 @@ def get_zenith_angle_at_earth(zenith, station_level):
             from matplotlib import pyplot as plt
             earth = spherical_to_cartesian(zenith=np.linspace(0, np.pi * 2, 1000), azimuth=0) * atm.r_e
             xs = np.linspace(-r_e * 0.5, r_e * 0.5)
-            line = xs / np.tan(zenith) + r_e + station_level
+            line = xs / np.tan(zenith) + r_e + observer_level
 
-            lot1 = np.array([0, 0, 1]) * np.linspace(0, atm.r_e + station_level + 1000)[:, None]
-            lot2 = np.array([x, 0, y]) / np.linalg.norm(np.array([x, 0, y])) * np.linspace(0, atm.r_e + station_level + 1000)[:, None]
+            lot1 = np.array([0, 0, 1]) * np.linspace(0, atm.r_e + observer_level + 1000)[:, None]
+            lot2 = np.array([x, 0, y]) / np.linalg.norm(np.array([x, 0, y])) * np.linspace(0, atm.r_e + observer_level + 1000)[:, None]
 
             plt.plot(x, y, "r*")
             plt.plot(earth[0], earth[2])
@@ -142,8 +208,9 @@ def get_zenith_angle_at_earth(zenith, station_level):
             plt.plot(lot2[:, 0], lot2[:, 2], "k--")
             plt.show()
 
+        # calculate
         v1 = np.array([x, 0, y])
-        distance = np.linalg.norm(v1 - np.array([0, 0, r_e + station_level]))
+        distance = np.linalg.norm(v1 - np.array([0, 0, r_e + observer_level]))
         line = spherical_to_cartesian(zenith, 0)
         local_zenith = get_angle(v1, line)
 

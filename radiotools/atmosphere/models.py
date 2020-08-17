@@ -418,18 +418,19 @@ class Atmosphere():
                 tmp.append(a[mask])
         return tmp
 
-    def get_atmosphere(self, zenith, h_low=0., h_up=np.infty):
+    def get_atmosphere(self, zenith, h_low=0., h_up=np.infty, observation_level=0):
         """ returns the atmosphere for an air shower with given zenith angle (in g/cm^2) """
-        return self._get_atmosphere(zenith, h_low=h_low, h_up=h_up) * 1e-4
+        return self._get_atmosphere(zenith, h_low=h_low, h_up=h_up, observation_level=observation_level) * 1e-4
 
-    def _get_atmosphere(self, zenith, h_low=0., h_up=np.infty):
+    def _get_atmosphere(self, zenith, h_low=0., h_up=np.infty, observation_level=0):
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
         mask_finite = np.array((h_up * np.ones_like(zenith)) < h_max)
         is_mask_finite = np.sum(mask_finite)
         tmp = np.zeros_like(zenith)
         if np.sum(mask_numeric):
             # print("getting numeric")
-            tmp[mask_numeric] = self._get_atmosphere_numeric(*self.__get_arguments(mask_numeric, zenith, h_low, h_up))
+            tmp[mask_numeric] = self._get_atmosphere_numeric(*self.__get_arguments(mask_numeric, zenith, h_low, h_up, observation_level))
+
         if np.sum(mask_taylor):
             # print("getting taylor")
             tmp[mask_taylor] = self._get_atmosphere_taylor(*self.__get_arguments(mask_taylor, zenith, h_low))
@@ -520,10 +521,10 @@ class Atmosphere():
                     tmp[mask] = np.zeros(np.sum(mask))
         return tmp
 
-    def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty):
+    def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty, observation_level=0):
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
-
+        
         for i in xrange(len(tmp)):
 
             t_h_low = h_low if np.array(h_low).size == 1 else h_low[i]
@@ -537,12 +538,10 @@ class Atmosphere():
             if t_h_up == np.infty:
                 t_h_up = h_max
 
-            d_low = get_distance_for_height_above_ground(t_h_low, z)
-            d_up = get_distance_for_height_above_ground(t_h_up, z)
-
-            full_atm = integrate.quad(self._get_density_for_distance,
-                                      d_low, d_up, args=(z,),
-                                      limit=500)[0]
+            d_low = get_distance_for_height_above_ground(t_h_low - observation_level, z, observation_level)
+            d_up = get_distance_for_height_above_ground(t_h_up - observation_level, z,  observation_level)
+            
+            full_atm = integrate.quad(self._get_density_for_distance, d_low, d_up, args=(z, observation_level), limit=500)[0]
             tmp[i] = full_atm
 
         return tmp
@@ -706,7 +705,7 @@ class Atmosphere():
 #         return self._get_density_for_distance(dxmax_geo)
 
     def _get_density_for_distance(self, d, zenith, observation_level=0):
-        h = get_height_above_ground(d, zenith, observation_level)
+        h = get_height_above_ground(d, zenith, observation_level) + observation_level
         return get_density(h, model=self.model)
 
     def get_distance_xmax(self, zenith, xmax, observation_level=1564.):

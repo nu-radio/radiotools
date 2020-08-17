@@ -530,6 +530,10 @@ class Atmosphere():
             t_h_low = h_low if np.array(h_low).size == 1 else h_low[i]
             t_h_up = h_up if np.array(h_up).size == 1 else h_up[i]
             z = zenith[i]
+            if hasattr(observation_level, "__len__"):
+                o = observation_level[i]
+            else:
+                o = observation_level
 
             if t_h_up <= t_h_low:
                 print("WARNING _get_atmosphere_numeric(): upper limit less than lower limit")
@@ -538,10 +542,10 @@ class Atmosphere():
             if t_h_up == np.infty:
                 t_h_up = h_max
 
-            d_low = get_distance_for_height_above_ground(t_h_low - observation_level, z, observation_level)
-            d_up = get_distance_for_height_above_ground(t_h_up - observation_level, z,  observation_level)
+            d_low = get_distance_for_height_above_ground(t_h_low - o, z, o)
+            d_up = get_distance_for_height_above_ground(t_h_up - o, z,  o)
             
-            full_atm = integrate.quad(self._get_density_for_distance, d_low, d_up, args=(z, observation_level), limit=500)[0]
+            full_atm = integrate.quad(self._get_density_for_distance, d_low, d_up, args=(z, o), limit=500)[0]
             tmp[i] = full_atm
 
         return tmp

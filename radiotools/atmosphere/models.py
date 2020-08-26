@@ -765,6 +765,20 @@ class Atmosphere():
         return np.arctan(r / dxmax)
 
     def get_radial_distane_from_viewing_angle(self, zenith, viewing_angle, xmax=600, observation_level=1564.):
+        """
+        calculates the radial distance from the observer position (defined by xmax and the viewing angle) to the shower
+        axis.
+        
+        Parameters
+        ----------
+        zenith: float
+            zenith angle
+        viewing_angle: float
+            the viewing angle, i.e. the angle between the shower axis and the line of sight from 
+            the observer to xmax.
+        xmax: float
+        observation_level: float
+        """
         dxmax = self.get_distance_xmax_geometric(zenith, xmax, observation_level)
         return dxmax * np.tan(viewing_angle)
 

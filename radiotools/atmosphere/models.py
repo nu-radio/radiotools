@@ -263,8 +263,7 @@ def get_atmosphere_upper_limit(model=default_model):
         return optimize.newton(partial(_get_atmosphere, model=model), x0=112.8e3)
 
 
-def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False,
-          model=1):
+def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False, model=default_model):
     return (n0 - 1) * get_density(h, allow_negative_heights=allow_negative_heights,
                                   model=model) / get_density(0, model=model) + 1
 
@@ -291,7 +290,7 @@ class Atmosphere():
                 print("reading constants from ", filename)
 
                 with np.load(filename, "rb") as fin:
-                    self.a, self.d = fin["a"], fin["d"]
+                    self.a = fin["a"]
 
                 if(len(self.a) != self.number_of_zeniths):
                     os.remove(filename)
@@ -303,9 +302,8 @@ class Atmosphere():
                 self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in xrange(5)]
 
             else:
-                self.d = np.zeros(self.number_of_zeniths)  # self.d = self.__calculate_d()
                 self.a = self.__calculate_a()
-                np.savez(filename, a=self.a, d=self.d)
+                np.savez(filename, a=self.a)
                 print("all constants calculated, exiting now... please rerun your analysis")
                 sys.exit(0)
 
@@ -428,10 +426,12 @@ class Atmosphere():
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
         mask_finite = np.array((h_up * np.ones_like(zenith)) < h_max)
         is_mask_finite = np.sum(mask_finite)
+
         tmp = np.zeros_like(zenith)
         if np.sum(mask_numeric):
             # print("getting numeric")
             tmp[mask_numeric] = self._get_atmosphere_numeric(*self.__get_arguments(mask_numeric, zenith, h_low, h_up))
+
         if np.sum(mask_taylor):
             # print("getting taylor")
             tmp[mask_taylor] = self._get_atmosphere_taylor(*self.__get_arguments(mask_taylor, zenith, h_low))
@@ -440,6 +440,7 @@ class Atmosphere():
                 mask_tmp = np.squeeze(mask_finite[mask_taylor])
                 tmp2 = self._get_atmosphere_taylor(*self.__get_arguments(mask_taylor, zenith, h_up))
                 tmp[mask_tmp] = tmp[mask_tmp] - np.array(tmp2)
+
         if np.sum(mask_flat):
             # print("getting flat atm")
             tmp[mask_flat] = self._get_atmosphere_flat(*self.__get_arguments(mask_flat, zenith, h_low))
@@ -447,23 +448,8 @@ class Atmosphere():
                 mask_tmp = np.squeeze(mask_finite[mask_flat])
                 tmp2 = self._get_atmosphere_flat(*self.__get_arguments(mask_flat, zenith, h_up))
                 tmp[mask_tmp] = tmp[mask_tmp] - np.array(tmp2)
-        return tmp
 
-    def __get_zenith_a_indices(self, zeniths):
-        n = self.number_of_zeniths - 1
-        cosz_bins = np.linspace(0, n, self.number_of_zeniths, dtype=np.int)
-        cosz = np.array(np.round(np.cos(zeniths) * n), dtype=np.int)
-        tmp = np.squeeze([np.argwhere(t == cosz_bins) for t in cosz])
         return tmp
-
-    def __get_a_from_cache(self, zeniths):
-        n = self.number_of_zeniths - 1
-        cosz_bins = np.linspace(0, n, self.number_of_zeniths, dtype=np.int)
-        cosz = np.array(np.round(np.cos(zeniths) * n), dtype=np.int)
-        a_indices = np.squeeze([np.argwhere(t == cosz_bins) for t in cosz])
-        cosz_bins_num = np.linspace(0, 1, self.number_of_zeniths)
-        a = ((self.a[a_indices]).T * (cosz_bins_num[a_indices] / np.cos(zeniths))).T
-        return a
 
     def __get_a_from_interpolation(self, zeniths):
         a = np.zeros((len(zeniths), 5))
@@ -500,7 +486,6 @@ class Atmosphere():
     def _get_atmosphere_taylor(self, zenith, h_low=0.):
         b = self.b
         c = self.c
-        # a_indices = self.__get_zenith_a_indices(zenith)
         a = self.__get_a_from_interpolation(zenith)
 
         masks = self.__get_height_masks(h_low)
@@ -542,23 +527,13 @@ class Atmosphere():
             d_low = get_distance_for_height_above_ground(t_h_low, z)
             d_up = get_distance_for_height_above_ground(t_h_up, z)
 
-            full_atm = integrate.quad(self._get_density_for_distance,
-                                      d_low, d_up, args=(z,),
-                                      limit=500)[0]
+            full_atm = integrate.quad(self._get_density_for_distance, d_low, d_up, args=(z,), limit=500)[0]
             tmp[i] = full_atm
 
         return tmp
 
     def _get_atmosphere_flat(self, zenith, h=0):
-        a = atm_models[self.model]['a']
-        b = atm_models[self.model]['b']
-        c = atm_models[self.model]['c']
-        layers = atm_models[self.model]['h']
-        y = np.where(h < layers[0], a[0] + b[0] * np.exp(-1 * h / c[0]), a[1] + b[1] * np.exp(-1 * h / c[1]))
-        y = np.where(h < layers[1], y, a[2] + b[2] * np.exp(-1 * h / c[2]))
-        y = np.where(h < layers[2], y, a[3] + b[3] * np.exp(-1 * h / c[3]))
-        y = np.where(h < layers[3], y, a[4] - b[4] * h / c[4])
-        y = np.where(h < h_max, y, 0)
+        y = _get_atmosphere(h, model=self.model)
         return y / np.cos(zenith)
 
     def get_vertical_height(self, zenith, xmax):
@@ -570,6 +545,7 @@ class Atmosphere():
     def _get_vertical_height(self, zenith, X):
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
         tmp = np.zeros_like(zenith)
+        # print(zenith, X)
         if np.sum(mask_numeric):
             print("get vertical height numeric", zenith)
             tmp[mask_numeric] = self._get_vertical_height_numeric(*self.__get_arguments(mask_numeric, zenith, X))
@@ -578,69 +554,7 @@ class Atmosphere():
         if np.sum(mask_flat):
             print("get vertical height flat")
             tmp[mask_flat] = self._get_vertical_height_flat(*self.__get_arguments(mask_flat, zenith, X))
-        return tmp
-
-    def __calculate_d(self):
-        zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
-        d = np.zeros((self.number_of_zeniths, 4))
-        self.curved = True
-        self.__zenith_numeric = 0
-        for iZ, z in enumerate(zeniths):
-            z = np.array([z])
-            print("calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor))
-            d[iZ][0] = 0
-            X1 = self._get_atmosphere(z, self.h[1])
-            d[iZ][1] = self._get_vertical_height_numeric(z, X1) - self._get_vertical_height_taylor_wo_constants(z, X1)
-            X2 = self._get_atmosphere(z, self.h[2])
-            d[iZ][2] = self._get_vertical_height_numeric(z, X2) - self._get_vertical_height_taylor_wo_constants(z, X2)
-            X3 = self._get_atmosphere(z, self.h[3])
-            d[iZ][3] = self._get_vertical_height_numeric(z, X3) - self._get_vertical_height_taylor_wo_constants(z, X3)
-            print("\t... d  = ", d[iZ], " iZ = ", iZ)
-        return d
-
-    def _get_vertical_height_taylor(self, zenith, X):
-        tmp = self._get_vertical_height_taylor_wo_constants(zenith, X)
-        masks = self.__get_X_masks(X, zenith)
-        d = self.d[self.__get_zenith_a_indices(zenith)]
-        for iX, mask in enumerate(masks):
-            if(np.sum(mask)):
-                if iX < 4:
-                    tmp[mask] += d[mask][..., iX]
-
-        return tmp
-
-    def _get_vertical_height_taylor_wo_constants(self, zenith, X):
-        b = self.b
-        c = self.c
-        ct = np.cos(zenith)
-        T0 = self._get_atmosphere(zenith)
-        masks = self.__get_X_masks(X, zenith)
-        # Xs = [self._get_atmosphere(zenith, h) for h in self.h]
-        # d = np.array([self._get_vertical_height_numeric(zenith, t) for t in Xs])
-        tmp = np.zeros_like(zenith)
-        for iX, mask in enumerate(masks):
-            if(np.sum(mask)):
-                if iX < 4:
-                    xx = X[mask] - T0[mask]
-                    if self.n_taylor >= 1:
-                        tmp[mask] = -c[iX] / b[iX] * ct[mask] * xx
-                    if self.n_taylor >= 2:
-                        tmp[mask] += -0.5 * c[iX] * (ct[mask] ** 2 * c[iX] - ct[mask] ** 2 * r_e - c[iX]) / (r_e * b[iX] ** 2) * xx ** 2
-                    if self.n_taylor >= 3:
-                        tmp[mask] += -1. / 6. * c[iX] * ct[mask] * (3 * ct[mask] ** 2 * c[iX] ** 2 - 4 * ct[mask] ** 2 * r_e * c[iX] + 2 * r_e ** 2 * ct[mask] ** 2 - 3 * c[iX] ** 2 + 4 * r_e * c[iX]) / (r_e ** 2 * b[iX] ** 3) * xx ** 3
-                    if self.n_taylor >= 4:
-                        tmp[mask] += -1. / (24. * r_e ** 3 * b[iX] ** 4) * c[iX] * (15 * ct[mask] ** 4 * c[iX] ** 3 - 25 * c[iX] ** 2 * r_e * ct[mask] ** 4 + 18 * c[iX] * r_e ** 2 * ct[mask] ** 4 - 6 * r_e ** 3 * ct[mask] ** 4 - 18 * c[iX] ** 3 * ct[mask] ** 2 + 29 * c[iX] ** 2 * r_e * ct[mask] ** 2 - 18 * c[iX] * r_e ** 2 * ct[mask] ** 2 + 3 * c[iX] ** 3 - 4 * c[iX] ** 2 * r_e) * xx ** 4
-                    if self.n_taylor >= 5:
-                        tmp[mask] += -1. / (120. * r_e ** 4 * b[iX] ** 5) * c[iX] * ct[mask] * (ct[mask] ** 4 * (105 * c[iX] ** 4 - 210 * c[iX] ** 3 * r_e + 190 * c[iX] ** 2 * r_e ** 2 - 96 * c[iX] * r_e ** 3 + 24 * r_e ** 4) + ct[mask] ** 2 * (-150 * c[iX] ** 4 + 288 * c[iX] ** 3 * r_e - 242 * c[iX] ** 2 * r_e ** 2 + 96 * c[iX] * r_e ** 3) + 45 * c[iX] ** 4 - 78 * r_e * c[iX] ** 3 + 52 * r_e ** 2 * c[iX] ** 2) * xx ** 5
-                    if self.n_taylor >= 6:
-                        tmp[mask] += -1. / (720. * r_e ** 5 * b[iX] ** 6) * c[iX] * (ct[mask] ** 6 * (945 * c[iX] ** 5 - 2205 * c[iX] ** 4 * r_e + 2380 * c[iX] ** 3 * r_e ** 2 - 1526 * c[iX] ** 2 * r_e ** 3 + 600 * c[iX] * r_e ** 4 - 120 * r_e ** 5) + ct[mask] ** 4 * (-1575 * c[iX] ** 5 + 3528 * c[iX] ** 4 * r_e - 3600 * c[iX] ** 3 * r_e ** 2 + 2074 * c[iX] ** 2 * r_e ** 3 - 600 * c[iX] * r_e ** 4) + ct[mask] ** 2 * (675 * c[iX] ** 5 - 1401 * c[iX] ** 4 * r_e - 1272 * c[iX] ** 3 * r_e ** 2 - 548 * c[iX] ** 2 * r_e ** 3) - 45 * c[iX] ** 5 + 78 * c[iX] ** 4 * r_e - 52 * c[iX] ** 3 * r_e ** 2) * xx ** 6
-                elif iX == 4:
-                    print("iX == 4", iX)
-                    # numeric fallback
-                    tmp[mask] = self._get_vertical_height_numeric(zenith, X)
-                else:
-                    print("iX > 4", iX)
-                    tmp[mask] = np.ones_like(mask) * h_max
+        # print(tmp)
         return tmp
 
     def _get_vertical_height_numeric(self, zenith, X):
@@ -702,10 +616,6 @@ class Atmosphere():
         h = self._get_vertical_height(zenith, xmax)
         rho = get_density(h, model=self.model)
         return rho
-
-#     def __get_density2_curved(self, xmax):
-#         dxmax_geo = self._get_distance_xmax_geometric(xmax, observation_level=0)
-#         return self._get_density_for_distance(dxmax_geo)
 
     def _get_density_for_distance(self, d, zenith, observation_level=0):
         h = get_height_above_ground(d, zenith, observation_level)
@@ -786,91 +696,12 @@ class Atmosphere():
 # #         _get_vertical_height(xmax, self.model)
 # #         dxmax = self._get_distance_xmax(xmax, observation_level=observation_level)
 # #         txmax = _get_atmosphere(observation_level, model=self.model) - dxmax * np.cos(self.zenith)
-# #         height = _get_vertical_height(txmax)
-# #         return (height - observation_level) / np.cos(self.zenith)
-# #
-#         height = _get_vertical_height(xmax * np.cos(self.zenith)) - observation_level
 #         return height / np.cos(self.zenith)
 
 #         full = _get_atmosphere(observation_level, model=self.model) / np.cos(self.zenith)
-#         dxmax = full - xmax
-#         height = _get_vertical_height(_get_atmosphere(0, model=self.model) - dxmax * np.cos(self.zenith))
-#         return height / np.cos(self.zenith)
 
 # def get_distance_xmax_geometric2(xmax, zenith, observation_level=1564.,
 #                                 model=1, curved=False):
 #     """ input:
-#         - xmax in g/cm^2
-#         - zenith in radians
-#         output: distance to xmax in m
-#     """
-#     return _get_distance_xmax_geometric2(zenith, xmax * 1e4,
-#                                         observation_level=observation_level,
-#                                         model=model, curved=curved)
-# def _get_distance_xmax_geometric2(zenith, xmax, observation_level=1564.,
-#                                  model=default_model,
-#                                  curved=default_curved):
-#     if curved:
-#         x0 = _get_distance_xmax_geometric(zenith, xmax,
-#                                           observation_level=observation_level,
-#                                           model=model, curved=False)
-#
-#         def ftmp(d, dxmax, zenith, observation_level):
-#             h = get_height_above_ground(d, zenith, observation_level=observation_level)
-#             h += observation_level
-#             dtmp = _get_atmosphere2(zenith, h_low=observation_level, h_up=h, model=model) - dxmax
-#             print "d = %.5g, h = %.5g, dtmp = %.5g" % (d, h, dtmp)
-#             return dtmp
-#
-#         dxmax = _get_distance_xmax(xmax, zenith, observation_level=observation_level, curved=True)
-#         print "distance to xmax = ", dxmax
-#         tolerance = max(1e-3, x0 * 1.e-6)
-#         dxmax_geo = optimize.newton(ftmp, x0=x0, maxiter=100, tol=tolerance,
-#                                     args=(dxmax, zenith, observation_level))
-#         # print "x0 = %.7g, dxmax_geo = %.7g" % (x0, dxmax_geo)
-#         return dxmax_geo
-#     else:
-#         dxmax = _get_distance_xmax(xmax, zenith, observation_level=observation_level,
-#                                    model=model, curved=False)
-#         xmax = _get_atmosphere(observation_level, model=model) - dxmax * np.cos(zenith)
-#         height = _get_vertical_height(xmax)
-#         return (height - observation_level) / np.cos(zenith)
-#     def _get_atmosphere2(self, zenith, h_low=0., h_up=np.infty):
-#         if use_curved(zenith, self.curved):
-#             if h_up <= h_low:
-#                 print "WARNING: upper limit less than lower limit"
-#                 return np.nan
-#             if h_up == np.infty:
-#                 h_up = h_max
-#             b = h_up
-#             d_low = get_distance_for_height_above_ground(h_low, zenith)
-#             d_up = get_distance_for_height_above_ground(b, zenith)
-#             d_up_1 = d_low + 2.e3
-#             if d_up_1 > d_up:
-#                 full_atm = integrate.quad(self._get_density_for_distance,
-#                                           zenith, d_low, d_up, limit=100, epsabs=1e-2)[0]
-#             else:
-#                 full_atm = integrate.quad(self._get_density_for_distance,
-#                                           zenith, d_low, d_up_1, limit=100, epsabs=1e-4)[0]
-#                 full_atm += integrate.quad(self._get_density_for_distance,
-#                                            zenith, d_up_1, d_up, limit=100, epsabs=1e-2)[0]
-#             return full_atm
-#         else:
-#             return (_get_atmosphere(h_low, model=self.model) - _get_atmosphere(h_up, model=self.model)) / np.cos(zenith)
 
 #     def get_atmosphere3(self, h_low=0., h_up=np.infty):
-#         return self._get_atmosphere3(h_low=h_low, h_up=h_up) * 1e-4
-#
-#     def _get_atmosphere3(self, h_low=0., h_up=np.infty):
-#         a = self.a
-#         b = self.b
-#         c = self.c
-#         h = h_low
-#         layers = atm_models[self.model]['h']
-#         dldh = self._get_dldh(h)
-#         y = np.where(h < layers[0], a[0] + b[0] * np.exp(-1 * h / c[0]) * dldh[0], a[1] + b[1] * np.exp(-1 * h / c[1]) * dldh[1])
-#         y = np.where(h < layers[1], y, a[2] + b[2] * np.exp(-1 * h / c[2]) * dldh[2])
-#         y = np.where(h < layers[2], y, a[3] + b[3] * np.exp(-1 * h / c[3]) * dldh[3])
-#         y = np.where(h < layers[3], y, a[4] - b[4] * h / c[4] * dldh[4])
-#         y = np.where(h < h_max, y, 0)
-#         return y

@@ -141,7 +141,8 @@ def get_vertical_height(slant_depth, model=default_model):
 
 
 def _get_vertical_height(at, model=default_model):
-    if np.shape(at) == ():
+    """ get vertical height from atmosphere, i.e., mass overburden """
+    if not hasattr(at, "__len__"):
         T = _get_i_at(at, model=model)
     else:
         T = np.zeros(len(at))
@@ -151,6 +152,7 @@ def _get_vertical_height(at, model=default_model):
 
 
 def _get_i_at(at, model=default_model):
+    """ get vertical height from atmosphere, i.e., mass overburden for different layer """
     a = atm_models[model]['a']
     b = atm_models[model]['b']
     c = atm_models[model]['c']
@@ -166,10 +168,12 @@ def _get_i_at(at, model=default_model):
         i = 3
     else:
         i = 4
+
     if i == 4:
         h = -1. * c[i] * (at - a[i]) / b[i]
     else:
         h = -1. * c[i] * np.log((at - a[i]) / b[i])
+
     return h
 
 
@@ -177,8 +181,10 @@ def get_atmosphere(h, model=default_model):
     """ returns the (vertical) amount of atmosphere above the height h above see level
     in units of g/cm^2
     input: height above sea level in meter"""
-    return _get_atmosphere(h, model=model) * 1e-4
-
+    if hasattr(h, "__len__"):
+        return _get_atmosphere(h, model=model) * 1e-4
+    else:
+        return _get_atmosphere_float(h, model=model) * 1e-4
 
 def _get_atmosphere(h, model=default_model):
     a = atm_models[model]['a']
@@ -192,6 +198,23 @@ def _get_atmosphere(h, model=default_model):
     y = np.where(h < h_max, y, 0)
     return y
 
+def _get_atmosphere_float(h, model=default_model):
+    if h > h_max:
+        return 0
+
+    a = atm_models[model]['a']
+    b = atm_models[model]['b']
+    c = atm_models[model]['c']
+    layers = atm_models[model]['h']
+
+    idx = np.argmin(np.abs(layers - h))
+    if h > layers[idx]:
+        idx += 1
+
+    if idx == 4:
+        return a[4] - b[4] * h / c[4]
+    else:
+        return a[idx] + b[idx] * np.exp(-1 * h / c[idx])
 
 def get_density(h, allow_negative_heights=True, model=default_model):
     """ returns the atmospheric density [g/m^3] for the height h above see level"""
@@ -199,20 +222,37 @@ def get_density(h, allow_negative_heights=True, model=default_model):
     c = atm_models[model]['c']
     layers = atm_models[model]['h']
 
-    y = np.zeros_like(h, dtype=np.float)
-    if not allow_negative_heights:
-        y *= np.nan  # set all requested densities for h < 0 to nan
-        y = np.where(h < 0, y, b[0] * np.exp(-1 * h / c[0]) / c[0])
+    if hasattr(h, "__len__"):
+        y = np.zeros_like(h, dtype=np.float)
+        if not allow_negative_heights:
+            y *= np.nan  # set all requested densities for h < 0 to nan
+            y = np.where(h < 0, y, b[0] * np.exp(-1 * h / c[0]) / c[0])
+        else:
+            y = b[0] * np.exp(-1 * h / c[0]) / c[0]
+
+        y = np.where(h < layers[0], y, b[1] * np.exp(-1 * h / c[1]) / c[1])
+        y = np.where(h < layers[1], y, b[2] * np.exp(-1 * h / c[2]) / c[2])
+        y = np.where(h < layers[2], y, b[3] * np.exp(-1 * h / c[3]) / c[3])
+        y = np.where(h < layers[3], y, b[4] / c[4])
+        y = np.where(h < h_max, y, 0)
+
+        return y
     else:
-        y = b[0] * np.exp(-1 * h / c[0]) / c[0]
+        if h < 0 and not allow_negative_heights:
+            return np.nan
 
-    y = np.where(h < layers[0], y, b[1] * np.exp(-1 * h / c[1]) / c[1])
-    y = np.where(h < layers[1], y, b[2] * np.exp(-1 * h / c[2]) / c[2])
-    y = np.where(h < layers[2], y, b[3] * np.exp(-1 * h / c[3]) / c[3])
-    y = np.where(h < layers[3], y, b[4] / c[4])
-    y = np.where(h < h_max, y, 0)
+        b = atm_models[model]['b']
+        c = atm_models[model]['c']
+        layers = atm_models[model]['h']
 
-    return y
+        idx = np.argmin(np.abs(layers - h))
+        if h > layers[idx]:
+            idx += 1
+
+        if idx == 4:
+            return b[4] / c[4]
+        else:
+            return b[idx] * np.exp(-1 * h / c[idx]) / c[idx]
 
 
 def get_density_for_distance(d, zenith, observation_level=0, model=default_model):

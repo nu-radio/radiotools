@@ -103,6 +103,9 @@ ENV/
 # atmosphere files
 radiotools/atmosphere/constants*
 
+# refractivity files
+radiotools/atmosphere/refractivity_*npz
+
 .project
 .pydevproject
 .settings/

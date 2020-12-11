@@ -111,6 +111,12 @@ atm_models = {  # US standard after Linsley
                    'b': 1e4 * np.array([1174.644971, 1227.2753683, 1585.7130562, 691.23389637, 1.]),
                    'c': 1e-2 * np.array([973884.44361, 723759.74682, 600308.13983, 738390.20525, 1.e9]),
                    'h': 1e3 * np.array([9.6, 15.6, 33.3, 100.])
+                  },
+              # South Pole April (De Ridder)
+              33: {'a': 1e4 * np.array([-69.7259, -2.79781, 0.262692, -.0000841695, 0.00207722]),
+                   'b': 1e4 * np.array([1111.70, 1128.64, 1413.98, 587.688, 1]),
+                   'c': 1e-2 * np.array([766099., 641716., 588082., 693300., 5430320300]),
+                   'h': 1e3 * np.array([7.6, 22.0, 40.4, 100.])
                   }
              }
 
@@ -186,6 +192,7 @@ def get_atmosphere(h, model=default_model):
     else:
         return _get_atmosphere_float(h, model=model) * 1e-4
 
+
 def _get_atmosphere(h, model=default_model):
     a = atm_models[model]['a']
     b = atm_models[model]['b']
@@ -197,6 +204,7 @@ def _get_atmosphere(h, model=default_model):
     y = np.where(h < layers[3], y, a[4] - b[4] * h / c[4])
     y = np.where(h < h_max, y, 0)
     return y
+
 
 def _get_atmosphere_float(h, model=default_model):
     if h > h_max:
@@ -215,6 +223,7 @@ def _get_atmosphere_float(h, model=default_model):
         return a[4] - b[4] * h / c[4]
     else:
         return a[idx] + b[idx] * np.exp(-1 * h / c[idx])
+
 
 def get_density(h, allow_negative_heights=True, model=default_model):
     """ returns the atmospheric density [g/m^3] for the height h above see level"""
@@ -550,7 +559,7 @@ class Atmosphere():
     def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty, observation_level=0):
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
-        
+
         for i in xrange(len(tmp)):
 
             t_h_low = h_low if np.array(h_low).size == 1 else h_low[i]
@@ -569,8 +578,8 @@ class Atmosphere():
                 t_h_up = h_max
 
             d_low = get_distance_for_height_above_ground(t_h_low - o, z, o)
-            d_up = get_distance_for_height_above_ground(t_h_up - o, z,  o)
-         
+            d_up = get_distance_for_height_above_ground(t_h_up - o, z, o)
+
             full_atm = integrate.quad(self._get_density_for_distance, d_low, d_up, args=(z, o), limit=500)[0]
 
             tmp[i] = full_atm

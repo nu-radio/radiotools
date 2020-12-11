@@ -1,5 +1,6 @@
 import inspect, re
 import math
+import sys
 import os
 from matplotlib import colors as mcolors
 
@@ -408,7 +409,6 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
         return fig, ax1
 
 
-
 def get_2dhist_normalized_columns(X, Y, fig, ax, binsx, binsy, shading='flat', clim=(None, None), norm=None, cmap=None):
     """
     creates a 2d histogram where the number of entries are normalized to 1 per column
@@ -521,8 +521,7 @@ def get_histogram2d(x=None, y=None, z=None,
             z = z / np.amax(z, axis=1)[:, None]
         else:
             sys.exit("Normalisation %s is not known.")
-
-
+    import matplotlib as mpl
     color_norm = mpl.colors.LogNorm() if cscale == "log" else None
     vmin, vmax = clim
     im = ax.pcolormesh(xedges, yedges, z, shading=shading, vmin=vmin, vmax=vmax, norm=color_norm, cmap=cmap)
@@ -540,11 +539,10 @@ def get_histogram2d(x=None, y=None, z=None,
 
     ax.set_title(title)
 
-    if ax1 is None:
+    if ax is None:
         save_histogram(fig, fname)
     else:
         return ax, im
-
 
 
 def save_histogram(filename, *args, **kwargs):

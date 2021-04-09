@@ -408,7 +408,6 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
         return fig, ax1
 
 
-
 def get_2dhist_normalized_columns(X, Y, fig, ax, binsx, binsy, shading='flat', clim=(None, None), norm=None, cmap=None):
     """
     creates a 2d histogram where the number of entries are normalized to 1 per column
@@ -522,7 +521,6 @@ def get_histogram2d(x=None, y=None, z=None,
         else:
             sys.exit("Normalisation %s is not known.")
 
-
     color_norm = mpl.colors.LogNorm() if cscale == "log" else None
     vmin, vmax = clim
     im = ax.pcolormesh(xedges, yedges, z, shading=shading, vmin=vmin, vmax=vmax, norm=color_norm, cmap=cmap)
@@ -544,7 +542,6 @@ def get_histogram2d(x=None, y=None, z=None,
         save_histogram(fig, fname)
     else:
         return ax, im
-
 
 
 def save_histogram(filename, *args, **kwargs):
@@ -576,6 +573,7 @@ def get_marker(i):
     markers = ["o", "D", "^", "s", ">"]
     return colors[i % len(colors)] + markers[i // len(colors)]
 
+
 def get_marker_only(i):
     markers = ["o", "D", "^", "s", ">"]
     return markers[i % len(markers)]
@@ -596,3 +594,9 @@ def get_color_linestyle(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
     markers = ["-", "--", ":", "-."]
     return markers[i % len(markers)] + colors[i % len(colors)]
+
+
+def get_color_linestyle2(i):
+    colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+    markers = ["-", "--", ":", "-."]
+    return markers[i % len(markers)] + colors[i // len(markers)]

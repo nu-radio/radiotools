@@ -608,21 +608,21 @@ class Atmosphere():
         return y / np.cos(zenith)
 
 
-    def get_vertical_height(self, zenith, xmax):
+    def get_vertical_height(self, zenith, xmax, observation_level=0):
         """ returns the (vertical) height above see level [in meters] as a function
         of zenith angle and Xmax [in g/cm^2]
         """
-        return self._get_vertical_height(zenith, xmax * 1e4)
+        return self._get_vertical_height(zenith, xmax * 1e4, observation_level=observation_level)
 
 
-    def _get_vertical_height(self, zenith, X):
+    def _get_vertical_height(self, zenith, X, observation_level=0):
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
         tmp = np.zeros_like(zenith)
 
         if np.sum(mask_numeric):
             print("get vertical height numeric", zenith)
             tmp[mask_numeric] = self._get_vertical_height_numeric(
-                *self.__get_arguments(mask_numeric, zenith, X))
+                *self.__get_arguments(mask_numeric, zenith, X), observation_level=observation_level)
 
         if np.sum(mask_taylor):
             tmp[mask_taylor] = self._get_vertical_height_numeric_taylor(
@@ -635,14 +635,16 @@ class Atmosphere():
         return tmp
 
 
-    def _get_vertical_height_numeric(self, zenith, X):
+    def _get_vertical_height_numeric(self, zenith, X, observation_level=0):
         height = np.zeros_like(zenith)
         zenith = np.array(zenith)
 
         # returns atmosphere between xmax and d
         def ftmp(d, zenith, xmax):
-            h = get_height_above_ground(d, zenith, observation_level=0)  # height above sea level
-            tmp = self._get_atmosphere_numeric([zenith], h_low=h)
+            h = get_height_above_ground(
+                d, zenith, observation_level=observation_level) + observation_level  # height above sea level
+            tmp = self._get_atmosphere_numeric(
+                [zenith], h_low=h, observation_level=observation_level)
             dtmp = tmp - xmax
             return dtmp
 
@@ -652,7 +654,8 @@ class Atmosphere():
             # finding root e.g., distance for given xmax (when difference is 0)
             dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6, args=(zenith[i], X[i]))
 
-            height[i] = get_height_above_ground(dxmax_geo, zenith[i], observation_level=0)
+            height[i] = get_height_above_ground(
+                dxmax_geo, zenith[i], observation_level=observation_level) + observation_level
 
         return height
 
@@ -688,13 +691,13 @@ class Atmosphere():
     def get_density(self, zenith, xmax):
         """ returns the atmospheric density as a function of zenith angle
         and shower maximum Xmax (in g/cm^2) """
-        return self._get_density(zenith, xmax * 1e4)
+        return self._get_density(zenith, xmax * 1e4, observation_level=observation_level)
 
 
-    def _get_density(self, zenith, xmax):
+    def _get_density(self, zenith, xmax, observation_level=0):
         """ returns the atmospheric density as a function of zenith angle
         and shower maximum Xmax """
-        h = self._get_vertical_height(zenith, xmax)
+        h = self._get_vertical_height(zenith, xmax, observation_level=observation_level)
         rho = get_density(h, model=self.model)
         return rho
 
@@ -728,7 +731,8 @@ class Atmosphere():
 
 
     def _get_distance_xmax_geometric(self, zenith, xmax, observation_level=1564.):
-        h = self._get_vertical_height(zenith, xmax) - observation_level
+        h = self._get_vertical_height(
+            zenith, xmax, observation_level) - observation_level
         return get_distance_for_height_above_ground(h, zenith, observation_level)
 
 

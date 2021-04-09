@@ -319,9 +319,16 @@ def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False, model=default_model
                                   model=model) / get_density(0, model=model) + 1
 
 
+def get_integrated_refractivity(h1, h2=0, n0=(1 + 2.92e-4), model=default_model):
+    at_in_between = (get_atmosphere(h2, model=model) - get_atmosphere(h1, model=model)) * 100 ** 2  # conversion to g/m^2
+    rint = (n0 - 1) / (get_density(0, model=model)) * at_in_between
+
+    return rint / (h1 - h2)
+
+
 class Atmosphere():
 
-    def __init__(self, model=17, n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80)):
+    def __init__(self, model=17, n0=(1 + 292e-6), n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80)):
         print("model is ", model)
         self.model = model
         self.curved = curved
@@ -332,6 +339,7 @@ class Atmosphere():
         self.number_of_zeniths = number_of_zeniths
         hh = atm_models[model]['h']
         self.h = np.append([0], hh)
+        self.n0 = n0
 
         if curved:
             folder = os.path.dirname(os.path.abspath(__file__))
@@ -579,7 +587,7 @@ class Atmosphere():
         return tmp
 
 
-    def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty, observation_level=0):
+    fix_model_calculation_include_obs_lvl _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty, observation_level=0):
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
 
@@ -796,3 +804,17 @@ class Atmosphere():
         """
         dxmax = self.get_distance_xmax_geometric(zenith, xmax, observation_level)
         return dxmax * np.tan(viewing_angle)
+
+
+    def _get_integrated_refractivity(self, zenith, distance, observation_level=0):
+        h_up = get_height_above_ground(distance, zenith, observation_level) + observation_level
+        at_in_between = self.get_atmosphere(zenith, h_low=observation_level, h_up=h_up, observation_level=observation_level) * 100 ** 2  # conversion to g/m^2
+        rint = (self.n0 - 1) / (get_density(0, model=self.model)) * at_in_between
+
+        return rint, at_in_between
+
+
+    def get_effective_refractivity(self, z, distance, observation_level):
+        r, at = self._get_integrated_refractivity(z, distance, observation_level)
+        return r / distance, at
+

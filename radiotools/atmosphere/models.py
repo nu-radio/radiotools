@@ -587,7 +587,7 @@ class Atmosphere():
         return tmp
 
 
-    fix_model_calculation_include_obs_lvl _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty, observation_level=0):
+    def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty, observation_level=0):
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
 

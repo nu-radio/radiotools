@@ -161,7 +161,7 @@ def get_intersection_between_circle_and_line(r, b, c):
         return x0 + b * mult, y0 - a * mult, x0 - b * mult, y0 + a * mult
 
 
-def get_zenith_angle_at_earth(zenith, observer_level):
+def get_zenith_angle_at_sea_level(zenith, observer_level):
     """
     Calculates intersections of a line with an anchor at an observation level and zenith angle with a spherical earth.
     Determines distance along line between clostest intersection and the observation level and local zenith angle at that
@@ -181,6 +181,10 @@ def get_zenith_angle_at_earth(zenith, observer_level):
     distance : float
         distance between found intersection and observation level in meter
     """
+
+    if observer_level == 0:
+        return zenith, 0
+
     r_e = atm.r_e
     coors = get_intersection_between_circle_and_line(r_e, -np.tan(zenith), (r_e + observer_level) * np.tan(zenith))
 

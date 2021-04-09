@@ -167,7 +167,8 @@ class RefractivityTable(object):
             print("Write {} ...".format(fname))
 
             # anchors for table binned in tan.
-            self._zeniths = np.arctan(np.linspace(np.tan(self._min_zenith), np.tan(self._max_zenith), self._number_of_zenith_bins))
+            self._zeniths = np.arctan(np.linspace(np.tan(self._min_zenith), 
+                                                  np.tan(self._max_zenith), self._number_of_zenith_bins))
             self._distances = []
             self._refractivity_integrated_table = []
 
@@ -229,17 +230,19 @@ class RefractivityTable(object):
 
         # if height is out of table (right edge): interpolate
         if not idx < len(self._heights) - 1:
-            slope10 = (self._refractivity_integrated_table_flat[-1] - self._refractivity_integrated_table_flat[-10]) / 10
+            slope10 = (self._refractivity_integrated_table_flat[-1] - \
+                self._refractivity_integrated_table_flat[-10]) / 10
             return self._refractivity_integrated_table_flat[-1] + slope10 * (fidx - len(self._heights))
 
-        return (1-f) * self._refractivity_integrated_table_flat[idx] + f * self._refractivity_integrated_table_flat[idx+1]
+        return (1-f) * self._refractivity_integrated_table_flat[idx] + f * \
+            self._refractivity_integrated_table_flat[idx+1]
 
 
     def _get_integrated_refractivity_for_distance(self, d, zenith):
         """
             Get integrated refractivity as function of the zenith angle and distance from ground
-            (along a axis with the specified zenith angle) from pre-calculated table. Takes clostest zenith angle
-            from table to calculated the refractivity.
+            (along a axis with the specified zenith angle) from pre-calculated table. 
+            Takes clostest zenith angle from table to calculated the refractivity.
         """
         if not self._curved:
             sys.exit("Table not available: please specifiy \"curved=True\"")
@@ -249,7 +252,8 @@ class RefractivityTable(object):
 
         # if distance is out of table (left edge): fail
         if d < np.amin(self._distances[zenith_idx]):
-            raise ValueError(r"Requested distance is out of range: {} ($\theta$ = {})".format(d, np.rad2deg(zenith)))
+            raise ValueError(r"Requested distance is out of range: {} ($\theta$ = {})".format(
+                d, np.rad2deg(zenith)))
 
         distance_idx = (d - self._distances[zenith_idx][0]) / self._distance_increment
         idx = int(distance_idx)
@@ -258,7 +262,8 @@ class RefractivityTable(object):
         if not idx < len(self._distances[zenith_idx]) - 1:
             slope10 = (self._refractivity_integrated_table[zenith_idx][-1] - \
                        self._refractivity_integrated_table[zenith_idx][-10]) / 10
-            return self._refractivity_integrated_table[zenith_idx][-1] + slope10 * (distance_idx - len(self._distances[zenith_idx]))
+            return self._refractivity_integrated_table[zenith_idx][-1] + slope10 \
+                 * (distance_idx - len(self._distances[zenith_idx]))
 
         f = distance_idx - idx
         return (1 - f) * self._refractivity_integrated_table[zenith_idx][idx] \
@@ -269,18 +274,17 @@ class RefractivityTable(object):
         """ get index of closest zenith bin """
 
         if zenith < np.amin(self._zeniths) or zenith > np.amax(self._zeniths):
-            raise ValueError("get_zenith_bin zenith out of range: {} not in [{}, {}]".format(*np.rad2deg([zenith,
-                             np.amin(self._zeniths), np.amax(self._zeniths)])))
+            raise ValueError("get_zenith_bin zenith out of range: {} not in [{}, {}]".format(
+                *np.rad2deg([zenith, np.amin(self._zeniths), np.amax(self._zeniths)])))
 
         return np.argmin(np.abs(self._zeniths - zenith))
 
 
     def get_integrated_refractivity_for_distance(self, d, zenith):
-        """
-            Get integrated refractivity as function of the zenith angle and distance from ground
-            (along a axis with the specified zenith angle) from pre-calculated table. If "_interpolate_zenith" is True,
-            a linear interpolation in zenith angle is performed, otherwise the clostest zenith angle bin is used for the
-            calculation.
+        """ Get integrated refractivity as function of the zenith angle and distance from ground
+            (along a axis with the specified zenith angle) from pre-calculated table.
+            If "_interpolate_zenith" is True, a linear interpolation in zenith angle is performed,
+            otherwise the clostest zenith angle bin is used for the calculation.
         """
         if not self._curved:
             sys.exit("Table not available: please specifiy \"curved=True\"")
@@ -299,9 +303,11 @@ class RefractivityTable(object):
         rup = self._get_integrated_refractivity_for_distance(d, self._zeniths[bin_up])
 
         if rlow < rup:
-            rinterp = rlow + (rup - rlow) / (self._zeniths[bin_up] - self._zeniths[bin_low]) * (zenith - self._zeniths[bin_low])
+            rinterp = rlow + (rup - rlow) / (self._zeniths[bin_up] - self._zeniths[bin_low]) \
+                 * (zenith - self._zeniths[bin_low])
         elif rup > rlow:
-            rinterp = rup + (rlow - rup) / (self._zeniths[bin_up] - self._zeniths[bin_low]) * (zenith - self._zeniths[bin_low])
+            rinterp = rup + (rlow - rup) / (self._zeniths[bin_up] - self._zeniths[bin_low]) \
+                * (zenith - self._zeniths[bin_low])
         else:
             rinterp = rlow
 
@@ -337,13 +343,15 @@ class RefractivityTable(object):
         if zenith_local < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
-        zenith_at_earth, distance_to_earth = helper.get_zenith_angle_at_earth(zenith_local, obs_level_local)
-        d2 = dist + distance_to_earth
+        zenith_at_sea_level, distance_to_sea_level = \
+            helper.get_zenith_angle_at_sea_level(zenith_local, obs_level_local)
+        d2 = dist + distance_to_sea_level
 
-        if zenith_at_earth < np.amin(self._zeniths):
+        if zenith_at_sea_level < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
-        return self.get_refractivity_between_two_points_from_distance(zenith_at_earth, distance_to_earth, d2)
+        return self.get_refractivity_between_two_points_from_distance(
+            zenith_at_sea_level, distance_to_sea_level, d2)
 
 
     def get_refractivity_between_two_points_numerical(self, p1, p2, debug=False):
@@ -390,7 +398,8 @@ if __name__ == "__main__":
             for pos in positions:
                 r_num = tab.get_refractivity_between_two_points_numerical(point_on_axis, pos, debug=False)
                 r_tab = tab.get_refractivity_between_two_points_tabulated(point_on_axis, pos)
-                r_tab_flat = tab_flat.get_refractivity_between_two_altitudes(helper.get_local_altitude(pos), helper.get_local_altitude(point_on_axis))
+                r_tab_flat = tab_flat.get_refractivity_between_two_altitudes(
+                    helper.get_local_altitude(pos), helper.get_local_altitude(point_on_axis))
 
                 zenith_eff = helper.get_local_zenith_angle(point_on_axis, pos)
                 obs_level_local = helper.get_local_altitude(pos)

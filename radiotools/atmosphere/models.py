@@ -342,7 +342,7 @@ def get_integrated_refractivity(h1, h2=0, n0=(1 + 2.92e-4), model=default_model)
 
 class Atmosphere():
 
-    def __init__(self, gdas_file=None, model=17, n0=(1 + 292e-6), n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80)):
+    def __init__(self, model=17, n0=(1 + 292e-6), n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80), gdas_file=None):
         
         self.curved = curved
         self.n_taylor = n_taylor

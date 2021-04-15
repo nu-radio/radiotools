@@ -7,6 +7,7 @@ from scipy import optimize, interpolate, integrate
 import numpy as np
 import os
 import sys
+import hashlib
 
 from radiotools import helper
 
@@ -121,6 +122,23 @@ atm_models = {  # US standard after Linsley
                    'h': 1e3 * np.array([7.6, 22.0, 40.4, 100.])
                   }
              }
+
+
+def add_gdas_model(gdas_file, gdas_model_id=99):
+    with open(gdas_file, "rb") as f:
+        # pipe contents of the file through
+        lines = f.readlines()
+
+        # skip first entry (0), conversion cm -> m
+        h = np.array(lines[1].strip(b"\n").split()[1:], dtype=float) / 100
+
+        a = np.array(lines[2].strip(b"\n").split(), dtype=float) * 1e4
+        b = np.array(lines[3].strip(b"\n").split(), dtype=float) * 1e4
+        c = np.array(lines[4].strip(b"\n").split(), dtype=float) * 1e-2
+
+    atm_models[gdas_model_id] = {"a": a, "b": b, "c": c, "h": h}
+
+    return gdas_model_id
 
 
 def get_auger_monthly_model(month):
@@ -252,10 +270,6 @@ def get_density(h, allow_negative_heights=True, model=default_model):
         if h < 0 and not allow_negative_heights:
             return np.nan
 
-        b = atm_models[model]['b']
-        c = atm_models[model]['c']
-        layers = atm_models[model]['h']
-
         idx = np.argmin(np.abs(layers - h))
         if h > layers[idx]:
             idx += 1
@@ -328,22 +342,37 @@ def get_integrated_refractivity(h1, h2=0, n0=(1 + 2.92e-4), model=default_model)
 
 class Atmosphere():
 
-    def __init__(self, model=17, n0=(1 + 292e-6), n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80)):
-        print("model is ", model)
-        self.model = model
+    def __init__(self, gdas_file=None, model=17, n0=(1 + 292e-6), n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80)):
+        
         self.curved = curved
         self.n_taylor = n_taylor
         self.__zenith_numeric = zenith_numeric
+        self.number_of_zeniths = number_of_zeniths
+
+        if gdas_file is None:
+            print("model is ", model)
+            self.model = model
+            self.n0 = n0
+            self._is_gdas = False
+        else:
+            self._is_gdas = True
+            self.model = add_gdas_model(gdas_file)
+            self.n0 = n0  # this is a bug!
+
         self.b = atm_models[model]['b']
         self.c = atm_models[model]['c']
-        self.number_of_zeniths = number_of_zeniths
         hh = atm_models[model]['h']
         self.h = np.append([0], hh)
-        self.n0 = n0
-
+        
         if curved:
             folder = os.path.dirname(os.path.abspath(__file__))
-            filename = os.path.join(folder, "constants_%02i_%i.npz" % (self.model, n_taylor))
+            if not self._is_gdas:
+                filename = os.path.join(folder, "constants_%02i_%i.npz" % (self.model, n_taylor))
+            else:
+                checksum = self.get_checksum()
+                filename = os.path.join(
+                    folder, "constants_%s_%i.npz" % (checksum, n_taylor))
+
             print("searching constants at ", filename)
             if os.path.exists(filename):
                 print("reading constants from ", filename)
@@ -365,6 +394,16 @@ class Atmosphere():
                 np.savez(filename, a=self.a)
                 print("all constants calculated, exiting now... please rerun your analysis")
                 sys.exit(0)
+
+
+    def get_checksum(self):
+        md5 = hashlib.md5()
+
+        for key in atm_models[self.model]:
+            for ele in atm_models[self.model][key]:
+                md5.update(str(ele).encode("utf-8"))
+
+        return md5.hexdigest()
 
 
     def __calculate_a(self,):

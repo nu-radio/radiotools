@@ -136,8 +136,8 @@ class RefractivityTable(object):
                 self._refractivity_table = np.array([n_param_ZHAireS(h) - 1 for h in self._heights])
             else:
                 self._refractivity_table = np.array([self._refractivity_at_sea_level * \
-                    atm.get_density(h, allow_negative_heights=True, model=self._atm_model) \
-                    / rho0 for h in self._heights])
+                    atm.get_density(h, allow_negative_heights=False, model=self._atm_model) \
+                     / rho0 for h in self._heights])
 
         self._refractivity_integrated_table_flat = np.cumsum(self._refractivity_table * self._height_increment)
 
@@ -211,7 +211,6 @@ class RefractivityTable(object):
                 max_dist = atm.get_distance_for_height_above_ground(self._max_heigth, zen, 0)
                 distances = np.arange(0, max_dist, self._distance_increment)
 
-                # using d + self._distance_increment / 2 yield a slightly larger bias
                 refractivities_for_distances = np.array([self.get_refractivity_for_height_tabulated(
                     atm.get_height_above_ground(d, zen, observation_level=0)) for d in distances])
 
@@ -378,15 +377,21 @@ class RefractivityTable(object):
         if zenith_local < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
-        zenith_at_sea_level, distance_to_sea_level = \
-            helper.get_zenith_angle_at_sea_level(zenith_local, obs_level_local)
-        d2 = dist + distance_to_sea_level
+        try:
+            zenith_at_earth, distance_to_earth = helper.get_zenith_angle_at_earth(zenith_local, obs_level_local)
+            d2 = dist + distance_to_earth
+        except SystemExit:
+            print("Catch SystemExit while calculating zenith at earth, resuming with numerical calculation")
+            return self.get_refractivity_between_two_points_numerical(p1, p2)
 
         if zenith_at_sea_level < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
-        return self.get_refractivity_between_two_points_from_distance(
-            zenith_at_sea_level, distance_to_sea_level, d2)
+        if zenith_at_earth > np.amax(self._zeniths):
+            print("Zenith out of range, perform numerical calculation")
+            return self.get_refractivity_between_two_points_numerical(p1, p2)
+
+        return self.get_refractivity_between_two_points_from_distance(zenith_at_earth, distance_to_earth, d2)
 
 
     def get_refractivity_between_two_points_numerical(self, p1, p2, debug=False):

@@ -35,7 +35,7 @@ def n_param_ZHAireS(h):
     return 1 + a * np.exp(-b * h)
 
 
-def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivity_at_sea_level, debug=False):
+def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refractivity_at_sea_level=None, table=None, debug=False):
     """
     Numerical calculation of the integrated refractivity between two positions along a straight line in the atmosphere.
     Takes curvature of a spherical earth into account.
@@ -49,9 +49,13 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivit
         coordinates in meter.
     atm_model : int
         Number of the atmospheric model (from radiotools.atmosphere.models) which provides the desity profile rho(h)
-        to calculate the refractivity via N(h) = N(0) * rho(h) / rho(0).
+        to calculate the refractivity via Gladstone–Dale relation: N(h) = N(0) * rho(h) / rho(0). 
+        Is only used if "table" is not None (default: None)
     refractivity_at_sea_level : float
-        Refractivity at earth surface, i.e., N(0) (default: 312e-6).
+        Refractivity at earth surface, i.e., N(0) (default: None). Necessary if refractivity is calculated 
+        via Gladstone–Dale relation. Not necessary/used if a RefractivityTable is given.
+    table : RefractivityTable 
+        If given, used to determine N(h). Instead of using Gladstone–Dale relation. (default: None)   
     debug : bool
         If True, prints out debug output (default: False).
 
@@ -60,6 +64,10 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivit
     --------
     integrated refractivity : float
     """
+
+    if table is None and (atm_model is None and refractivity_at_sea_level is None):
+        sys.exit("Invalid arguments. You have to specify table or atm_model and refractivity_at_sea_level.")
+
     line = p1 - p2
     max_dist = np.linalg.norm(line)
     zenith = helper.get_local_zenith_angle(p1, p2)
@@ -72,8 +80,11 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivit
     refractivity = 0
     for dist in distances:
         height_asl = atm.get_height_above_ground(dist + dstep / 2, zenith, observation_level=obs_level) + obs_level
-        refractivity += (atm.get_n(height_asl, n0=refractivity_at_sea_level+1, allow_negative_heights=False,
-            model=atm_model) - 1) * dstep
+        if table is None:
+            refractivity += (atm.get_n(height_asl, n0=refractivity_at_sea_level+1, allow_negative_heights=False,
+                model=atm_model) - 1) * dstep
+        else:
+            refractivity += table.get_refractivity_for_height_tabulated(height_asl) * dstep
 
     if debug:
         height_max = atm.get_height_above_ground(max_dist, zenith, observation_level=obs_level) + obs_level
@@ -170,7 +181,8 @@ class RefractivityTable(object):
             if np.abs(self._heights[null]) > 1:
                 sys.exit("Could not find refractive index at sea level in gdas profile. stop...")
             self._refractivity_at_sea_level = self._refractivity_table[null]
-        
+
+
     def read_table_from_file(self, fname):
         print("Read in {} ...".format(fname))
         data = np.load(fname, "r", allow_pickle=True)
@@ -398,8 +410,7 @@ class RefractivityTable(object):
 
     def get_refractivity_between_two_points_numerical(self, p1, p2, debug=False):
         """ Get numerical calculated integrated refractivity between two positions in atmosphere """
-        return get_refractivity_between_two_points_numerical(p1, p2, atm_model=self._atm_model,
-            refractivity_at_sea_level=self._refractivity_at_sea_level, debug=debug)
+        return get_refractivity_between_two_points_numerical(p1, p2, table=self, debug=debug)
 
 
 if __name__ == "__main__":

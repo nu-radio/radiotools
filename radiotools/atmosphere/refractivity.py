@@ -366,15 +366,17 @@ class RefractivityTable(object):
 
     def get_refractivity_between_two_points_tabulated(self, p1, p2):
         """
-        Get integrated refractivity between two positions in curved atmosphere. If zenith angle out of table use
-        flat atmosphere
+        Get integrated refractivity between two positions in curved atmosphere.
+        If not curved or zenith angle below table use flat atmosphere.
+        If curved, zenith angle above range or SystemExit happens use numerical solution.
         """
 
         dist = np.linalg.norm(p1 - p2)
         zenith_local = helper.get_local_zenith_angle(p1, p2)
         obs_level_local = helper.get_local_altitude(p2)
 
-        if zenith_local < np.amin(self._zeniths):
+        # return flat solution
+        if not self._curved or zenith_local < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
         try:

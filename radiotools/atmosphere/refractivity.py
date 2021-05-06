@@ -392,7 +392,8 @@ class RefractivityTable(object):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
         try:
-            zenith_at_earth, distance_to_earth = helper.get_zenith_angle_at_earth(zenith_local, obs_level_local)
+            zenith_at_sea_level, distance_to_earth = helper.get_zenith_angle_at_sea_level(
+                zenith_local, obs_level_local)
             d2 = dist + distance_to_earth
         except SystemExit:
             print("Catch SystemExit while calculating zenith at earth, resuming with numerical calculation")
@@ -401,11 +402,11 @@ class RefractivityTable(object):
         if zenith_at_sea_level < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
-        if zenith_at_earth > np.amax(self._zeniths):
+        if zenith_at_sea_level > np.amax(self._zeniths):
             print("Zenith out of range, perform numerical calculation")
             return self.get_refractivity_between_two_points_numerical(p1, p2)
 
-        return self.get_refractivity_between_two_points_from_distance(zenith_at_earth, distance_to_earth, d2)
+        return self.get_refractivity_between_two_points_from_distance(zenith_at_sea_level, distance_to_earth, d2)
 
 
     def get_refractivity_between_two_points_numerical(self, p1, p2, debug=False):

@@ -13,7 +13,7 @@ def calculate_energy_fluence_vector(traces, times, signal_window=100., remove_no
     ----------
     traces: array
         time series in V / m
-        array is expected to have 2 (time, channel) or 3 (antenna, time, channel) dimensions
+        array is expected to have 2 (time, polarisation) or 3 (antenna, time, polarisation) dimensions
     times: array
         corresponding time vector in seconds
         array is expected to have 1 (time) or 2 (antenna, time) dimensions
@@ -78,7 +78,7 @@ def calculate_energy_fluence(traces, times, signal_window=100., remove_noise=Tru
     ----------
     traces: array
         time series in V / m
-        array is expected to have 2 (time, channel) or 3 (antenna, time, channel) dimensions
+        array is expected to have 2 (time, polarisation) or 3 (antenna, time, polarisation) dimensions
     times: array
         corresponding time vector in seconds
         array is expected to have 1 (time) or 2 (antenna, time) dimensions

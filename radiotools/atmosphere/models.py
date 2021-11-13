@@ -141,6 +141,11 @@ def add_gdas_model(gdas_file, gdas_model_id=99):
     return gdas_model_id
 
 
+def add_refractive_index_profile(gdas_file):
+    h, n = np.genfromtxt(gdas_file, unpack=True, skip_header=6)
+    return np.array([h, n]).T
+
+
 def get_auger_monthly_model(month):
     """ Helper function to get the correct model number for monthly Auger atmospheres """
     return month + 17
@@ -357,7 +362,9 @@ class Atmosphere():
         else:
             self._is_gdas = True
             self.model = add_gdas_model(gdas_file)
-            self.n0 = n0  # this is a bug!
+            self.n0 = None  
+            # array(height, n)
+            self.n_h = add_refractive_index_profile(gdas_file)
 
         self.b = atm_models[model]['b']
         self.c = atm_models[model]['c']
@@ -394,6 +401,23 @@ class Atmosphere():
                 np.savez(filename, a=self.a)
                 print("all constants calculated, exiting now... please rerun your analysis")
                 sys.exit(0)
+
+
+    def get_n(self, h):
+        if self._is_gdas:
+            idx = np.argmin(np.abs(self.n_h[:, 0] - h))
+            if idx == 0:
+                return self.n_h[0, 1]
+            elif idx == len(self.n_h):
+                return self.n_h[-1, 1]
+
+            if self.n_h[idx, 0] < h:
+                return self.n_h[idx, 1] + (self.n_h[idx+1, 1] - self.n_h[idx, 1]) / (self.n_h[idx+1, 0] - self.n_h[idx, 0]) * (h - self.n_h[idx, 0])
+            else:
+                return self.n_h[idx-1, 1] + (self.n_h[idx, 1] - self.n_h[idx-1, 1]) / (self.n_h[idx, 0] - self.n_h[idx-1, 0]) * (h - self.n_h[idx-1, 0])
+
+        else:
+            return get_n(h, n0=self.n0, model=self.model)
 
 
     def get_checksum(self):
@@ -675,7 +699,7 @@ class Atmosphere():
         tmp = np.zeros_like(zenith)
 
         if np.sum(mask_numeric):
-            print("get vertical height numeric", zenith)
+            # print("get vertical height numeric", zenith)
             tmp[mask_numeric] = self._get_vertical_height_numeric(
                 *self.__get_arguments(mask_numeric, zenith, X), observation_level=observation_level)
 
@@ -684,7 +708,7 @@ class Atmosphere():
                 *self.__get_arguments(mask_taylor, zenith, X), observation_level=observation_level)
 
         if np.sum(mask_flat):
-            print("get vertical height flat")
+            # print("get vertical height flat")
             tmp[mask_flat] = self._get_vertical_height_flat(*self.__get_arguments(mask_flat, zenith, X))
 
         return tmp
@@ -848,7 +872,7 @@ class Atmosphere():
     def _get_integrated_refractivity(self, zenith, distance, observation_level=0):
         h_up = get_height_above_ground(distance, zenith, observation_level) + observation_level
         at_in_between = self.get_atmosphere(zenith, h_low=observation_level, h_up=h_up, observation_level=observation_level) * 100 ** 2  # conversion to g/m^2
-        rint = (self.n0 - 1) / (get_density(0, model=self.model)) * at_in_between
+        rint = (self.get_n(0) - 1) / (get_density(0, model=self.model)) * at_in_between
 
         return rint, at_in_between
 

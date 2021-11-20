@@ -20,7 +20,7 @@ r_e = 6.371 * 1e6  # radius of Earth
     All functions use "grams" and "meters", only the functions that receive and
     return "atmospheric depth" use the unit "g/cm^2"
 
-    atmospheric density models as used in CORSIKA. The parameters are documented in the CORSIKA manual
+    Atmospheric density models as used in CORSIKA. The parameters are documented in the CORSIKA manual
     the parameters for the Auger atmospheres are documented in detail in GAP2011-133
     The May and October atmospheres describe the annual average best.
 """
@@ -125,6 +125,22 @@ atm_models = {  # US standard after Linsley
 
 
 def add_gdas_model(gdas_file, gdas_model_id=99):
+    """ 
+    Parses a GDAS file and adds the parameter a, b, c, h to the atmospheric model dictionary.
+
+    Parameter:
+    ----------
+
+    gdas_file: str
+        Path to the GDAS file
+
+    gdas_model_id: int
+        ID to store the GDAS density model in "atm_models"
+
+    Returns: int
+       gdas_model_id
+     
+    """
     with open(gdas_file, "rb") as f:
         # pipe contents of the file through
         lines = f.readlines()
@@ -142,6 +158,19 @@ def add_gdas_model(gdas_file, gdas_model_id=99):
 
 
 def add_refractive_index_profile(gdas_file):
+    """
+    Parses a GDAS file and returns the refractive index profile.
+
+    Parameter:
+    ----------
+
+    gdas_file: str
+        Path to the GDAS file
+
+    Returns: array
+       refractive index profile (heights, n)
+
+    """
     h, n = np.genfromtxt(gdas_file, unpack=True, skip_header=6)
     return np.array([h, n]).T
 
@@ -334,6 +363,29 @@ def get_atmosphere_upper_limit(model=default_model):
 
 
 def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False, model=default_model):
+    """ 
+    Returns the refractive index for a given height above sea level according to the 
+    Galestone-Dale law, i.e., n(h) = 1 + (n(0) - 1) * rho(h) / rho(0).
+
+    Parameters:
+    -----------
+
+    h: double
+        Height above sea level (not ground level!)
+    
+    n0: double
+        Refractive index at sea level
+
+    allow_negative_heights: bool
+        If true allows the height/alitutde below sea level
+    
+    model: int
+        ID of the density model
+
+    Returns: double
+        Refractive index for the given height
+
+    """
     return (n0 - 1) * get_density(h, allow_negative_heights=allow_negative_heights,
                                   model=model) / get_density(0, model=model) + 1
 
@@ -348,6 +400,44 @@ def get_integrated_refractivity(h1, h2=0, n0=(1 + 2.92e-4), model=default_model)
 class Atmosphere():
 
     def __init__(self, model=17, n0=(1 + 292e-6), n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80), gdas_file=None):
+        """
+        Interface for a 5-layer parameteric atmosphere model (density profil) as used in, e.g., CORSIKA/CoREAS. 
+        Allows to determine height, depth, density, distance, ... for any point along an (shower) axis.
+        Uses a taylor expansion to extend the analytic discription for curved atmosphere to higher zenith angle (if curved=True).
+        Also allows to use GDAS-files to describe the atmospheric density profile and the atmospheric refractive index profile.
+        The refractive index profile relies on more information than just the density. A GDAS-file can be created with the
+        gdastool implemented in CORISKA [1].
+
+        [1]: https://arxiv.org/pdf/2006.02228.pdf
+        
+
+        Parameters:
+        -----------
+
+        model: int
+            Number of the predifiend atmospheric density profile. Instead you can provide a GDAS file. Default: 17, i.e., US standard after Keilhauer.
+        
+        n0: double
+            Refractive index at sea level. Default: 1 + 292e-6.
+
+        n_taylor: int
+            Order of the taylor expansion used to analyically describe/approximate a curved atmosphere. Default: 5.
+
+        curved: bool
+            If ture assume a curved atmosphere, i.e., do not use the approximation X(theta) = X_vert / cos(theta) but use "taylor method" or numerical integration. Default: True.
+
+        number_of_zeniths: int
+            Number of zenith angle bins to precompute the parameter for the taylor expansions. Default: 201
+
+        zenith_numeric: float
+            Zenith angle from which on the model relies on numerical calculation rather than the "taylor method". Default: 80 degree.
+
+        gdas_file: str
+            Path to a GDAS file from which the parameter for the density profile and a complete refractive index profile are optained. 
+            This refractive index profile relise on more information than just the density.
+            Can be used instead of "model", i.e., if set, "model" is ignored. Default: None.
+        
+        """
         
         self.curved = curved
         self.n_taylor = n_taylor
@@ -421,6 +511,7 @@ class Atmosphere():
 
 
     def get_checksum(self):
+        """ Hence gdas atmospheres do not have a specific IDs calculate a has for the given file. """
         md5 = hashlib.md5()
 
         for key in atm_models[self.model]:
@@ -870,6 +961,10 @@ class Atmosphere():
 
 
     def _get_integrated_refractivity(self, zenith, distance, observation_level=0):
+        """ 
+        Integrate the refractivity (N = n - 1) from ground along a given path (defined with zenith angel and distance).
+        Returns the integrated refractivity and grammage.
+        """
         h_up = get_height_above_ground(distance, zenith, observation_level) + observation_level
         at_in_between = self.get_atmosphere(zenith, h_low=observation_level, h_up=h_up, observation_level=observation_level) * 100 ** 2  # conversion to g/m^2
         rint = (self.get_n(0) - 1) / (get_density(0, model=self.model)) * at_in_between
@@ -878,6 +973,10 @@ class Atmosphere():
 
 
     def get_effective_refractivity(self, z, distance, observation_level):
+        """ 
+        Returns the "effective" refractivity N_int / d. With N_int being the refractivity integrated over the distance d.
+        Returns the effective refractivity and grammage.
+        """
         r, at = self._get_integrated_refractivity(z, distance, observation_level)
         return r / distance, at
 

@@ -296,11 +296,11 @@ def get_rotation(v1, v2):
 
 
 def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
-    import collections
+    import collections.abc
     if degree:
         interval = np.rad2deg(interval)
     delta = interval[1] - interval[0]
-    if(isinstance(angle, (collections.Sequence, np.ndarray))):
+    if(isinstance(angle, (collections.abc.Sequence, np.ndarray))):
         angle[angle >= interval[1]] -= delta
         angle[angle < interval[0]] += delta
     else:
@@ -328,11 +328,6 @@ def get_magnetic_field_vector(site=None):
     if site is None:
         site = 'auger'
     return magnetic_fields[site]
-#     # Magnetic Field Vector in Argentina
-#     Bzenith = np.deg2rad(54.351)
-#     Bazimuth = np.deg2rad(87.467)
-#     vec = spherical_to_cartesian(Bzenith, Bazimuth)
-#     vec *= 0.242587
 
 
 def get_angle_to_magnetic_field_vector(zenith, azimuth, site=None):

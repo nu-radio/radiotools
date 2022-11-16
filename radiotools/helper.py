@@ -161,7 +161,7 @@ def get_intersection_between_circle_and_line(r, b, c):
         return x0 + b * mult, y0 - a * mult, x0 - b * mult, y0 + a * mult
 
 
-def get_zenith_angle_at_earth(zenith, observer_level):
+def get_zenith_angle_at_sea_level(zenith, observer_level):
     """
     Calculates intersections of a line with an anchor at an observation level and zenith angle with a spherical earth.
     Determines distance along line between clostest intersection and the observation level and local zenith angle at that
@@ -181,6 +181,10 @@ def get_zenith_angle_at_earth(zenith, observer_level):
     distance : float
         distance between found intersection and observation level in meter
     """
+
+    if observer_level == 0:
+        return zenith, 0
+
     r_e = atm.r_e
     coors = get_intersection_between_circle_and_line(r_e, -np.tan(zenith), (r_e + observer_level) * np.tan(zenith))
 
@@ -292,11 +296,11 @@ def get_rotation(v1, v2):
 
 
 def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
-    import collections
+    import collections.abc
     if degree:
         interval = np.rad2deg(interval)
     delta = interval[1] - interval[0]
-    if(isinstance(angle, (collections.Sequence, np.ndarray))):
+    if(isinstance(angle, (collections.abc.Sequence, np.ndarray))):
         angle[angle >= interval[1]] -= delta
         angle[angle < interval[0]] += delta
     else:
@@ -324,11 +328,6 @@ def get_magnetic_field_vector(site=None):
     if site is None:
         site = 'auger'
     return magnetic_fields[site]
-#     # Magnetic Field Vector in Argentina
-#     Bzenith = np.deg2rad(54.351)
-#     Bazimuth = np.deg2rad(87.467)
-#     vec = spherical_to_cartesian(Bzenith, Bazimuth)
-#     vec *= 0.242587
 
 
 def get_angle_to_magnetic_field_vector(zenith, azimuth, site=None):
@@ -868,3 +867,76 @@ def pretty_time_delta(seconds):
         return '%dm%ds' % (minutes, seconds)
     else:
         return '%ds' % (seconds,)
+
+
+def FC_limits(counts):
+    """
+    returns the 68%CL Feldman-Cousins limits for 0 background.
+    
+    Parameters
+    ----------
+    counts: float
+        the number of counts/events
+        
+    Returns tuple of floats
+        lower_bound, upper bound
+    """
+
+    from scipy.interpolate import interp1d
+
+    count_list = np.arange(0, 21)
+    lower_limits = [0.00,
+                    0.37,
+                    0.74,
+                    1.10,
+                    2.34,
+                    2.75,
+                    3.82,
+                    4.25,
+                    5.30,
+                    6.33,
+                    6.78,
+                    7.81,
+                    8.83,
+                    9.28,
+                    10.30,
+                    11.32,
+                    12.33,
+                    12.79,
+                    13.81,
+                    14.82,
+                    15.83]
+    upper_limits = [1.29,
+                    2.75,
+                    4.25,
+                    5.30,
+                    6.78,
+                    7, 81,
+                    9.28,
+                    10.30,
+                    11.32,
+                    12.79,
+                    13.81,
+                    14.82,
+                    16.29,
+                    17.30,
+                    18.32,
+                    19.32,
+                    20.80,
+                    21.81,
+                    22.82,
+                    25.30]
+
+    if counts > count_list[-1]:
+
+        return (counts - np.sqrt(counts), counts + np.sqrt(counts))
+
+    elif counts < 0:
+
+        return (0.00, 1.29)
+
+    low_interp = interp1d(count_list, lower_limits)
+    up_interp = interp1d(count_list, upper_limits)
+
+    return (low_interp(counts), up_interp(counts))
+

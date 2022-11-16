@@ -521,8 +521,8 @@ def get_histogram2d(x=None, y=None, z=None,
             z = z / np.amax(z, axis=1)[:, None]
         else:
             sys.exit("Normalisation %s is not known.")
-    import matplotlib as mpl
-    color_norm = mpl.colors.LogNorm() if cscale == "log" else None
+
+    color_norm = mcolors.LogNorm() if cscale == "log" else None
     vmin, vmax = clim
     im = ax.pcolormesh(xedges, yedges, z, shading=shading, vmin=vmin, vmax=vmax, norm=color_norm, cmap=cmap)
 
@@ -595,3 +595,9 @@ def get_color_linestyle(i):
     colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
     markers = ["-", "--", ":", "-."]
     return markers[i % len(markers)] + colors[i % len(colors)]
+
+
+def get_color_linestyle2(i):
+    colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+    markers = ["-", "--", ":", "-."]
+    return markers[i % len(markers)] + colors[i // len(markers)]

@@ -10,7 +10,7 @@ average_zenith = np.deg2rad(45)
 
 
 @functools.lru_cache(maxsize=16)
-def get_average_density(model=1):
+def get_average_density(model=1, zenith=average_zenith, xmax=average_xmax):
     """ get average density
 
     Parameters
@@ -25,7 +25,7 @@ def get_average_density(model=1):
 
     """
     atmc = atm.Atmosphere(model=model)
-    return atmc.get_density(average_zenith, average_xmax) * 1e-3  # in kg/m^3
+    return atmc.get_density(zenith, xmax) * 1e-3  # in kg/m^3
 
 
 def get_clipping(dxmax):

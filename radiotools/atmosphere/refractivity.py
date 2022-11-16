@@ -35,7 +35,7 @@ def n_param_ZHAireS(h):
     return 1 + a * np.exp(-b * h)
 
 
-def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivity_at_sea_level, debug=False):
+def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refractivity_at_sea_level=None, table=None, debug=False):
     """
     Numerical calculation of the integrated refractivity between two positions along a straight line in the atmosphere.
     Takes curvature of a spherical earth into account.
@@ -49,9 +49,13 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivit
         coordinates in meter.
     atm_model : int
         Number of the atmospheric model (from radiotools.atmosphere.models) which provides the desity profile rho(h)
-        to calculate the refractivity via N(h) = N(0) * rho(h) / rho(0).
+        to calculate the refractivity via Gladstone–Dale relation: N(h) = N(0) * rho(h) / rho(0). 
+        Is only used if "table" is not None (default: None)
     refractivity_at_sea_level : float
-        Refractivity at earth surface, i.e., N(0) (default: 312e-6).
+        Refractivity at earth surface, i.e., N(0) (default: None). Necessary if refractivity is calculated 
+        via Gladstone–Dale relation. Not necessary/used if a RefractivityTable is given.
+    table : RefractivityTable 
+        If given, used to determine N(h). Instead of using Gladstone–Dale relation. (default: None)   
     debug : bool
         If True, prints out debug output (default: False).
 
@@ -60,6 +64,10 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivit
     --------
     integrated refractivity : float
     """
+
+    if table is None and (atm_model is None and refractivity_at_sea_level is None):
+        sys.exit("Invalid arguments. You have to specify table or atm_model and refractivity_at_sea_level.")
+
     line = p1 - p2
     max_dist = np.linalg.norm(line)
     zenith = helper.get_local_zenith_angle(p1, p2)
@@ -72,8 +80,11 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model, refractivit
     refractivity = 0
     for dist in distances:
         height_asl = atm.get_height_above_ground(dist + dstep / 2, zenith, observation_level=obs_level) + obs_level
-        refractivity += (atm.get_n(height_asl, n0=refractivity_at_sea_level+1, allow_negative_heights=False,
-            model=atm_model) - 1) * dstep
+        if table is None:
+            refractivity += (atm.get_n(height_asl, n0=refractivity_at_sea_level+1, allow_negative_heights=False,
+                model=atm_model) - 1) * dstep
+        else:
+            refractivity += table.get_refractivity_for_height_tabulated(height_asl) * dstep
 
     if debug:
         height_max = atm.get_height_above_ground(max_dist, zenith, observation_level=obs_level) + obs_level
@@ -90,7 +101,7 @@ class RefractivityTable(object):
 
 
     def __init__(self, atm_model=atm.default_model, param=False, refractivity_at_sea_level=312e-6, curved=False,
-                 interpolate_zenith=True, number_of_zenith_bins=1000, distance_increment=100):
+                 interpolate_zenith=True, number_of_zenith_bins=1000, distance_increment=100, gdas_file=None):
 
         """
         Parameters
@@ -114,33 +125,63 @@ class RefractivityTable(object):
 
         """
 
+        self._read_profile_from_gdas = gdas_file is not None
+
+        if self._read_profile_from_gdas:
+            self._gdas_file_name = os.path.basename(gdas_file)
+            self.parse_gdas_file(gdas_file)
+            self._use_param = False
+            self._atm_model = None
+        else:
+            self._refractivity_at_sea_level = refractivity_at_sea_level
+            self._use_param = param
+            self._atm_model = atm_model
+
+            # set fix values.
+            self._height_increment = 10
+            self._max_heigth = 4e4
+            self._heights = np.arange(0, self._max_heigth, self._height_increment)
+        
+            rho0 = atm.get_density(0, allow_negative_heights=False, model=self._atm_model)
+            if self._use_param:
+                self._refractivity_table = np.array([n_param_ZHAireS(h) - 1 for h in self._heights])
+            else:
+                self._refractivity_table = np.array([self._refractivity_at_sea_level * \
+                    atm.get_density(h, allow_negative_heights=False, model=self._atm_model) \
+                     / rho0 for h in self._heights])
+
+        self._refractivity_integrated_table_flat = np.cumsum(self._refractivity_table * self._height_increment)
+
+        self._min_zenith = np.deg2rad(50)
+        self._max_zenith = np.deg2rad(89)
         self._distance_increment = distance_increment
         self._number_of_zenith_bins = number_of_zenith_bins
         self._interpolate_zenith = interpolate_zenith
-        self._refractivity_at_sea_level = refractivity_at_sea_level
-        self._use_param = param
-        self._atm_model = atm_model
-
-        # set fix values.
-        self._min_zenith = np.deg2rad(50)
-        self._max_zenith = np.deg2rad(89)
-        self._height_increment = 10
-        self._max_heigth = 4e4
-
-        self._heights = np.arange(0, self._max_heigth, self._height_increment)
-        rho0 = atm.get_density(0, allow_negative_heights=False, model=self._atm_model)
-        if self._use_param:
-            self._refractivity_table = np.array([n_param_ZHAireS(h) - 1 for h in self._heights])
-        else:
-            self._refractivity_table = np.array([self._refractivity_at_sea_level * \
-                atm.get_density(h, allow_negative_heights=True, model=self._atm_model) \
-                 / rho0 for h in self._heights])
-
-        self._refractivity_integrated_table_flat = np.cumsum(self._refractivity_table * self._height_increment)
 
         self._curved = curved
         if self._curved:
             self.get_cached_table_curved_atmosphere()
+
+    def parse_gdas_file(self, gdas_file):
+        with open(gdas_file, "r") as f:
+            lines = f.readlines()
+            
+            atm_para = [l.strip("\n").split() for l in lines[1:5]]
+            self._heights = np.zeros(len(lines) - 6)
+            self._refractivity_table = np.zeros(len(lines) - 6)
+            for idx, l in enumerate(lines[6:]):
+                h, n = l.strip("\n").split()
+                self._heights[idx] = float(h)
+                self._refractivity_table[idx] = float(n) - 1
+            self._height_increment = self._heights[1] - self._heights[0]
+            self._max_heigth = np.amax(self._heights)
+
+            # just take the "layer" closet value to 0 (sea level) if its within 1m. This is stupid but should accurate enought. 
+            null = np.argmin(np.abs(self._heights))
+            if np.abs(self._heights[null]) > 1:
+                sys.exit("Could not find refractive index at sea level in gdas profile. stop...")
+            self._refractivity_at_sea_level = self._refractivity_table[null]
+
 
     def read_table_from_file(self, fname):
         print("Read in {} ...".format(fname))
@@ -157,8 +198,14 @@ class RefractivityTable(object):
         """
 
         basedir = os.path.dirname(os.path.abspath(__file__))
-        fname = os.path.join(basedir, "refractivity_%02d_%.0f_%d_%d.npz" % (self._atm_model,
-                self._refractivity_at_sea_level * 1e6, self._number_of_zenith_bins, self._distance_increment))
+        if self._read_profile_from_gdas:
+            fname_tmp = "refractivity_%.0f_%s.npz" % (
+                self._refractivity_at_sea_level * 1e6, self._gdas_file_name.replace(".DAT", ""))
+        else:
+            fname_tmp = "refractivity_%02d_%.0f_%d_%d.npz" % (
+                self._atm_model, self._refractivity_at_sea_level * 1e6, self._number_of_zenith_bins, self._distance_increment)
+
+        fname = os.path.join(basedir, fname_tmp)
 
         if os.path.exists(fname):
             self.read_table_from_file(fname)
@@ -176,7 +223,6 @@ class RefractivityTable(object):
                 max_dist = atm.get_distance_for_height_above_ground(self._max_heigth, zen, 0)
                 distances = np.arange(0, max_dist, self._distance_increment)
 
-                # using d + self._distance_increment / 2 yield a slightly larger bias
                 refractivities_for_distances = np.array([self.get_refractivity_for_height_tabulated(
                     atm.get_height_above_ground(d, zen, observation_level=0)) for d in distances])
 
@@ -332,32 +378,40 @@ class RefractivityTable(object):
 
     def get_refractivity_between_two_points_tabulated(self, p1, p2):
         """
-        Get integrated refractivity between two positions in curved atmosphere. If zenith angle out of table use
-        flat atmosphere
+        Get integrated refractivity between two positions in curved atmosphere.
+        If not curved or zenith angle below table use flat atmosphere.
+        If curved, zenith angle above range or SystemExit happens use numerical solution.
         """
 
         dist = np.linalg.norm(p1 - p2)
         zenith_local = helper.get_local_zenith_angle(p1, p2)
         obs_level_local = helper.get_local_altitude(p2)
 
-        if zenith_local < np.amin(self._zeniths):
+        # return flat solution
+        if not self._curved or zenith_local < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
-        zenith_at_sea_level, distance_to_sea_level = \
-            helper.get_zenith_angle_at_sea_level(zenith_local, obs_level_local)
-        d2 = dist + distance_to_sea_level
+        try:
+            zenith_at_sea_level, distance_to_earth = helper.get_zenith_angle_at_sea_level(
+                zenith_local, obs_level_local)
+            d2 = dist + distance_to_earth
+        except SystemExit:
+            print("Catch SystemExit while calculating zenith at earth, resuming with numerical calculation")
+            return self.get_refractivity_between_two_points_numerical(p1, p2)
 
         if zenith_at_sea_level < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
-        return self.get_refractivity_between_two_points_from_distance(
-            zenith_at_sea_level, distance_to_sea_level, d2)
+        if zenith_at_sea_level > np.amax(self._zeniths):
+            print("Zenith out of range, perform numerical calculation")
+            return self.get_refractivity_between_two_points_numerical(p1, p2)
+
+        return self.get_refractivity_between_two_points_from_distance(zenith_at_sea_level, distance_to_earth, d2)
 
 
     def get_refractivity_between_two_points_numerical(self, p1, p2, debug=False):
         """ Get numerical calculated integrated refractivity between two positions in atmosphere """
-        return get_refractivity_between_two_points_numerical(p1, p2, atm_model=self._atm_model,
-            refractivity_at_sea_level=self._refractivity_at_sea_level, debug=debug)
+        return get_refractivity_between_two_points_numerical(p1, p2, table=self, debug=debug)
 
 
 if __name__ == "__main__":

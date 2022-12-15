@@ -300,7 +300,7 @@ def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
     if degree:
         interval = np.rad2deg(interval)
     delta = interval[1] - interval[0]
-    if(isinstance(angle, (collections.Sequence, np.ndarray))):
+    if(isinstance(angle, (collections.abc.Sequence, np.ndarray))):
         angle[angle >= interval[1]] -= delta
         angle[angle < interval[0]] += delta
     else:

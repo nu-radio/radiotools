@@ -324,7 +324,9 @@ def get_magnetic_field_vector(site=None):
     magnetic_fields = {'auger': np.array([0.00871198, 0.19693423, 0.1413841]),
                        'mooresbay': np.array([0.058457, -0.09042, 0.61439]),
                        'summit': np.array([-.037467, 0.075575, -0.539887]),  # Summit station, Greenland
-                       'southpole': np.array([-0.14390398, 0.08590658, 0.52081228])}  # position of SP arianna station
+                       'southpole': np.array([-0.14390398, 0.08590658, 0.52081228]),  # position of SP arianna station
+                       'lofar': np.array([0.004675, 0.186270, -0.456412])  # values from 2015
+                       }  
     if site is None:
         site = 'auger'
     return magnetic_fields[site]

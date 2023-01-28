@@ -596,8 +596,8 @@ class Atmosphere():
 
     def __get_method_mask(self, zenith):
         if not self.curved:
-            return np.ones_like(zenith, dtype=np.bool), np.zeros_like(zenith, dtype=np.bool), np.zeros_like(zenith, dtype=np.bool)
-        mask_flat = np.zeros_like(zenith, dtype=np.bool)
+            return np.ones_like(zenith, dtype=bool), np.zeros_like(zenith, dtype=bool), np.zeros_like(zenith, dtype=bool)
+        mask_flat = np.zeros_like(zenith, dtype=bool)
         mask_taylor = zenith < self.__zenith_numeric
         mask_numeric = zenith >= self.__zenith_numeric
         return mask_flat, mask_taylor, mask_numeric
@@ -691,7 +691,7 @@ class Atmosphere():
         mask = zeniths < np.deg2rad(83)
         fig, ax = plt.subplots(1, 1)
         x = np.rad2deg(zeniths[mask])
-        # mask2 = np.array([0, 1] * (np.sum(mask) / 2), dtype=np.bool)
+        # mask2 = np.array([0, 1] * (np.sum(mask) / 2), dtype=bool)
 
         ax.plot(x, self.a[..., 0][mask], ".", label="a0")
         ax.plot(x, self.a[..., 1][mask], ".", label="a1")

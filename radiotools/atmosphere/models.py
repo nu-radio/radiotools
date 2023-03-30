@@ -286,7 +286,7 @@ def get_density(h, allow_negative_heights=True, model=default_model):
     layers = atm_models[model]['h']
 
     if hasattr(h, "__len__"):
-        y = np.zeros_like(h, dtype=np.float)
+        y = np.zeros_like(h, dtype=np.float32)
         if not allow_negative_heights:
             y *= np.nan  # set all requested densities for h < 0 to nan
             y = np.where(h < 0, y, b[0] * np.exp(-1 * h / c[0]) / c[0])

@@ -2,6 +2,78 @@
 Statistic functions
 """
 import numpy as np
+from numpy import arange, array, bincount, ndarray, ones, where
+from numpy.random import seed, random, randint
+
+
+class WalkerRandomSampling(object):
+    """Walker's alias method for random objects with different probablities.
+    
+    from https://gist.github.com/ntamas/1109133
+    __author__ = "Tamas Nepusz, Denis Bzowy"
+    __version__ = "27jul2011"
+    
+    Based on the implementation of Denis Bzowy at the following URL:
+    http://code.activestate.com/recipes/576564-walkers-alias-method-for-random-objects-with-diffe/
+    """
+
+    def __init__(self, weights, keys=None):
+        """Builds the Walker tables ``prob`` and ``inx`` for calls to `random()`.
+        The weights (a list or tuple or iterable) can be in any order and they
+        do not even have to sum to 1."""
+        n = self.n = len(weights)
+        if keys is None:
+            self.keys = keys
+        else:
+            self.keys = array(keys)
+
+        if isinstance(weights, (list, tuple)):
+            weights = array(weights, dtype=float)
+        elif isinstance(weights, ndarray):
+            if weights.dtype != float:
+                weights = weights.astype(float)
+        else:
+            weights = array(list(weights), dtype=float)
+
+        if weights.ndim != 1:
+            raise ValueError("weights must be a vector")
+
+        weights = weights * n / weights.sum()
+
+        inx = -ones(n, dtype=int)
+        short = where(weights < 1)[0].tolist()
+        long = where(weights > 1)[0].tolist()
+        while short and long:
+            j = short.pop()
+            k = long[-1]
+
+            inx[j] = k
+            weights[k] -= (1 - weights[j])
+            if weights[k] < 1:
+                short.append(k)
+                long.pop()
+
+        self.prob = weights
+        self.inx = inx
+
+    def random(self, count=None):
+        """Returns a given number of random integers or keys, with probabilities
+        being proportional to the weights supplied in the constructor.
+
+        When `count` is ``None``, returns a single integer or key, otherwise
+        returns a NumPy array with a length given in `count`.
+        """
+        if count is None:
+            u = random()
+            j = randint(self.n)
+            k = j if u <= self.prob[j] else self.inx[j]
+            return self.keys[k] if self.keys is not None else k
+
+        u = random(count)
+        j = randint(self.n, size=count)
+        k = where(u <= self.prob[j], j, self.inx[j])
+        return self.keys[k] if self.keys is not None else k
+
 
 
 def mid(x):
@@ -17,7 +89,7 @@ def mean_and_variance(y, weights):
     """
     w_sum = sum(weights)
     m = np.dot(y, weights) / w_sum
-    v = np.dot((y - m)**2, weights) / w_sum
+    v = np.dot((y - m) ** 2, weights) / w_sum
     return m, v
 
 
@@ -118,7 +190,7 @@ def binned_mean(x, y, bins, weights=None):
         weights = np.ones(len(x))  # use weights=1 if none given
 
     for i in range(n):
-        idx = (dig == i+1)
+        idx = (dig == i + 1)
         try:
             my[i] = np.average(y[idx], weights=weights[idx])
         except ZeroDivisionError:
@@ -137,7 +209,7 @@ def binned_mean_and_variance(x, y, bins, weights=None):
     my, vy = np.zeros(n), np.zeros(n)
 
     for i in range(n):
-        idx = (dig == i+1)
+        idx = (dig == i + 1)
 
         if not idx.any():  # check for empty bin
             my[i] = np.nan
@@ -146,7 +218,7 @@ def binned_mean_and_variance(x, y, bins, weights=None):
 
         if weights is None:
             my[i] = np.mean(y[idx])
-            vy[i] = np.std(y[idx])**2
+            vy[i] = np.std(y[idx]) ** 2
         else:
             my[i], vy[i] = mean_and_variance(y[idx], weights[idx])
 
@@ -166,8 +238,8 @@ def sym_interval_around(x, xm, alpha):
     n = len(x)  # number of samples
     ns = int((1 - alpha) * n)  # number of samples corresponding to 1-alpha
 
-    i0 = i - ns/2  # index of lower and upper bound of interval
-    i1 = i + ns/2
+    i0 = i - ns / 2  # index of lower and upper bound of interval
+    i1 = i + ns / 2
 
     # if central value doesn't allow for (1-alpha)/2 on left side, add to right
     if i0 < 0:
@@ -175,7 +247,7 @@ def sym_interval_around(x, xm, alpha):
         i0 = 0
     # if central value doesn't allow for (1-alpha)/2 on right side, add to left
     if i1 >= n:
-        i0 -= i1-n+1
-        i1 = n-1
+        i0 -= i1 - n + 1
+        i1 = n - 1
 
     return xt[int(i0)], xt[int(i1)]

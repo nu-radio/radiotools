@@ -171,7 +171,7 @@ def write_list(filename, station_positions, station_name=None, append=False):
     fout.close()
 
 
-def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, obs_level_corsika=None,
+def write_list_star_pattern(filename, zen, az, append=False, obs_level=1400.0, obs_level_corsika=None,
                             inc=np.deg2rad(-35.7324), ground_plane=True, r_min=0., r_max=500.,
                             rs=None,
                             slicing_method=None, slices=[], n_rings=20,

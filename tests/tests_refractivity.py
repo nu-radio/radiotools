@@ -1,5 +1,4 @@
 from __future__ import print_function
-from past.builtins import xrange
 
 from radiotools.atmosphere import refractivity
 from radiotools import helper

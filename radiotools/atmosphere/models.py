@@ -1,8 +1,4 @@
-# Python 2 and 3: backward-compatible
-from __future__ import absolute_import, division, print_function  # , unicode_literals
-
 from scipy import optimize, interpolate, integrate
-
 import numpy as np
 import os
 import sys

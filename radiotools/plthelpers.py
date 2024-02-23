@@ -14,7 +14,7 @@ import radiotools.stats
 def get_discrete_cmap(N, base_cmap='viridis'):
     cmap = plt.get_cmap(base_cmap, N)
     colors = []
-    N = np.int(N)
+    N = int(N)
     for i in range(N):
         if(i % 2 == 0):
             colors.append(cmap.colors[i // 2])
@@ -302,7 +302,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
     for i in range(N):
         xlabel = ""
         if xlabels:
-            if(type(xlabels) != np.str):
+            if(type(xlabels) != str):
                 xlabel = xlabels[i]
             else:
                 xlabel = xlabels
@@ -317,7 +317,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
         if titles:
             title = titles[i]
         if bins is not None:
-            if(type(bins) == np.int):
+            if(type(bins) == int):
                 tbin = bins
             else:
                 if (isinstance(bins[0], float) or isinstance(bins[0], int)):

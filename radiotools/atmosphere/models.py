@@ -1,9 +1,4 @@
-# Python 2 and 3: backward-compatible
-from __future__ import absolute_import, division, print_function  # , unicode_literals
-from past.builtins import xrange
-
 from scipy import optimize, interpolate, integrate
-
 import numpy as np
 import os
 import sys
@@ -484,7 +479,7 @@ class Atmosphere():
 
                 zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
                 mask = zeniths < np.deg2rad(90)
-                self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in xrange(5)]
+                self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in range(5)]
 
             else:
                 self.a = self.__calculate_a()
@@ -680,7 +675,7 @@ class Atmosphere():
 
     def __get_a_from_interpolation(self, zeniths):
         a = np.zeros((len(zeniths), 5))
-        for i in xrange(5):
+        for i in range(5):
             a[..., i] = self.a_funcs[i](zeniths)
         return a
 
@@ -702,7 +697,7 @@ class Atmosphere():
         ax.legend()
         plt.tight_layout()
 
-        for i in xrange(5):
+        for i in range(5):
             y = self.a[..., i][mask]
             f2 = interpolate.interp1d(x, y, kind='cubic')
             xxx = np.linspace(0, 81, 100)
@@ -745,7 +740,7 @@ class Atmosphere():
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
 
-        for i in xrange(len(tmp)):
+        for i in range(len(tmp)):
 
             t_h_low = h_low if np.array(h_low).size == 1 else h_low[i]
             t_h_up = h_up if np.array(h_up).size == 1 else h_up[i]
@@ -818,7 +813,7 @@ class Atmosphere():
             dtmp = tmp - xmax
             return dtmp
 
-        for i in xrange(len(height)):
+        for i in range(len(height)):
             x0 = get_distance_for_height_above_ground(self._get_vertical_height_flat(zenith[i], X[i]), zenith[i])
 
             # finding root e.g., distance for given xmax (when difference is 0)
@@ -843,7 +838,7 @@ class Atmosphere():
             dtmp = tmp - xmax
             return dtmp
 
-        for i in xrange(len(height)):
+        for i in range(len(height)):
             if(X[i] < 0):
                 X[i] = 0
 

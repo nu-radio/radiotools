@@ -1,10 +1,8 @@
-from __future__ import absolute_import, division, print_function  # , unicode_literals
 import os
 import stat
 import numpy as np
 from radiotools import coordinatesystems
 from radiotools import helper as hp
-from past.builtins import xrange
 
 # $_CONDOR_SCRATCH_DIR
 
@@ -242,7 +240,7 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
                 slices = np.array(slices)
                 if(slicing_method == "distance"):
                     slices *= 100
-                for iSlice in xrange(len(slices) - 1):
+                for iSlice in range(len(slices) - 1):
                     name = "pos_%i_%i_slice%i" % (rs[i], np.rad2deg(azimuths[j]), iSlice)
                     if gammacut is None:
                         fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
@@ -310,7 +308,7 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
 #                     slices = np.array(slices)
 #                     if(slicing_method == "distance"):
 #                         slices *= 100
-#                     for iSlice in xrange(len(slices) - 1):
+#                     for iSlice in range(len(slices) - 1):
 #                         fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
 #     fout.close()
 

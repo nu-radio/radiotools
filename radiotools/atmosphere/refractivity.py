@@ -231,8 +231,8 @@ class RefractivityTable(object):
                 self._distances.append(distances)
                 self._refractivity_integrated_table.append(refractivity_integrated_table)
 
-            self._distances = np.array(self._distances)
-            self._refractivity_integrated_table = np.array(self._refractivity_integrated_table)
+            self._distances = np.array(self._distances, dtype=object)
+            self._refractivity_integrated_table = np.array(self._refractivity_integrated_table, dtype=object)
 
             data = {"refractivity_integrated_table": self._refractivity_integrated_table,
                     "distance_increment": self._distance_increment,

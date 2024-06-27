@@ -628,12 +628,12 @@ class Atmosphere():
         return [a * ones if np.shape(a) == () else a[mask] for a in args]
 
 
-    def get_atmosphere(self, zenith, h_low=0., h_up=np.infty, observation_level=0):
+    def get_atmosphere(self, zenith, h_low=0., h_up=np.inf, observation_level=0):
         """ returns the atmosphere for an air shower with given zenith angle (in g/cm^2) """
         return self._get_atmosphere(zenith, h_low=h_low, h_up=h_up, observation_level=observation_level) * 1e-4
 
 
-    def _get_atmosphere(self, zenith, h_low=0., h_up=np.infty, observation_level=0):
+    def _get_atmosphere(self, zenith, h_low=0., h_up=np.inf, observation_level=0):
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
         
         mask_h2_finite = np.array((h_up * np.ones_like(zenith)) < h_max)
@@ -736,7 +736,7 @@ class Atmosphere():
         return tmp
 
 
-    def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.infty, observation_level=0):
+    def _get_atmosphere_numeric(self, zenith, h_low=0, h_up=np.inf, observation_level=0):
         zenith = np.array(zenith)
         tmp = np.zeros_like(zenith)
 
@@ -754,7 +754,7 @@ class Atmosphere():
                 print("WARNING _get_atmosphere_numeric(): upper limit less than lower limit")
                 return np.nan
 
-            if t_h_up == np.infty:
+            if t_h_up == np.inf:
                 t_h_up = h_max
 
             d_low = get_distance_for_height_above_ground(t_h_low - o, z, o)

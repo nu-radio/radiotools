@@ -371,12 +371,17 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 antennas = np.dot(rotation_z_axis, antennas)
 
             if(slicing_method is None):
+                # default: with no slicing or gammacut
                 if gammacut is None:
-                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(x, y, z, name))
+                    # save the generated starshapes to the antenna list file
+                    # positions in cm
+                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(antennas[0], antennas[1], antennas[1], name))
                 else:
                     for iG, gcut in enumerate(gammacut):
                         name = "pos_%i_%i_gamma%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iG)
-                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(x, y, z, name, gcut[0], gcut[1]))
+                        # save the generated starshapes to the antenna list file
+                        # positions in cm
+                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(antennas[0], antennas[1], antennas[1], name, gcut[0], gcut[1]))
             else:
                 if(len(slices) <= 1):
                     print("ERROR: at least one slice must be specified")
@@ -390,10 +395,14 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 for iSlice in xrange(len(slices) - 1):
                     name = "pos_%i_%i_slice%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iSlice)
                     if gammacut is None:
-                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
+                        # save the generated starshapes to the antenna list file
+                        # positions in cm
+                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(antennas[0], antennas[1], antennas[1], name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
                     else:
                         for iG, gcut in enumerate(gammacut):
                             name_gamma = "%s_gamma%i" % (name, iG)
+                            # save the generated starshapes to the antenna list file
+                            # positions in cm
                             fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(x, y, z, name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
     
     print("Saved antenna positions (in groundplane coordinates) to file: ", filename)

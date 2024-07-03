@@ -414,7 +414,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
         with open("shower_plane.list", "w") as file:
                 
             # transform the station positions to vxB system for plot
-            shower_plane_system = cst.transform_to_vxB_vxvxB(np.array(station_positions_groundsystem))
+            shower_plane_system = cs.transform_to_vxB_vxvxB(np.array(station_positions_groundsystem))
          
             for i in range(len(shower_plane_system)):
                 # save the generated starshapes to the antenna.list file

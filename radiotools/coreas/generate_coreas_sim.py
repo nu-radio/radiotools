@@ -307,10 +307,14 @@ def write_list_star_pattern(filename, zenith, azimuth,
     # string for the end of the antenna names
     observation_plane_string = "gp" # short for groundplane
     if not ground_plane:
+        # instead use shower plane shorthand
         observation_plane_string = "sp"
 
-    if rs is None:
-        rs = np.linspace(r_min, r_max, n_rings + 1)
+    # check whether antenna ring radii are provided by input
+    if antenna_rings is None:
+        antenna_rings = np.linspace(r_min, r_max, n_rings + 1)
+
+    # if provided, add an additional antenna in the middle
     else:
         n_rings = len(rs)
         rs = np.append(0, rs)

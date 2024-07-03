@@ -171,21 +171,76 @@ def write_list(filename, station_positions, station_name=None, append=False):
     fout.close()
 
 
-def write_list_star_pattern(filename, zen, az, append=False, obs_level=1400.0, obs_level_corsika=None,
-                            inc=np.deg2rad(-35.7324), ground_plane=True, r_min=0., r_max=500.,
-                            rs=None,
-                            slicing_method=None, slices=[], n_rings=20,
-                            azimuths=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
-                            gammacut=None):
+def write_list_star_pattern(filename, zenith, azimuth, 
+                            append=False, 
+                            obs_level=1564.0, 
+                            obs_level_corsika=None, 
+                            ground_plane=True,
+                            Auger_CS=True,
+                            inclination=np.deg2rad(-35.7324),
+                            r_min=0., r_max=500.,n_rings=30,
+                            arm_orientiations=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
+                            antenna_rings=None,
+                            slicing_method=None, slices=[], 
+                            gammacut=None,
+                            vxB_plot=False
+                            ):
     """
-    if the list file should contain more than one observation level, both the
-    current observation level as well as the CORSIKA observation level needs
-    to be specified as the x, y coordinates are relativ to the core position at
-    the CORSIKA observation level. The coordinates for all observation levels
-    that differ from the CORSIKA observation level need to be shifted along the
-    shower axis accordingly.
+    Parameters
+    ----------
+    filename :  string
+        should have the extension ".list"
+        If the file is supposed to be used with the 
+        radio_mpi Corsika generator (https://github.com/fedbont94/Horeka/tree/radio_mpi),
+        keep the default filename.
+
+    zenith :  float (in radians)
+        zenith angle of the incoming signal/air-shower direction (0 deg is pointing vertically upwards)
+        Is converted to radians immediately
+
+    azimuth :  float (in radians)
+        azimuth angle of the incoming signal/air-shower direction (0 deg is North, 90 deg is West)
+        Is converted to radians immediately
+
+    obslevel :  float (!!in m!!)
+        Observation level of the detector in the vertical direction
+
+    obs_level_corsika:  float (!!in m!!)
+        if the list file should contain more than one observation level, both the
+        current observation level as well as the CORSIKA observation level needs
+        to be specified as the x, y coordinates are relative to the core position at
+        the CORSIKA observation level. The coordinates for all observation levels
+        that differ from the CORSIKA observation level need to be shifted along the
+        shower axis accordingly.
+
+    ground_plane :  bool     
+        True:  for antennas positioned on the ground plane
+        False: for antennas positioned in the shower plane, in the air
+
+    Auger_CS : bool (default is True)
+        True -> you are providing input in Auger coordinates
+        False -> you are providing input in Corsika coordinates
+
+    inclination :  float (in radians)
+        Inclination of the magnetic field.
+        It describes the angle between the Earth's surface and the magnetic field lines.
+        The default value is given for the Auger site
+
+    Rmin, Rmax, n_rings, arm_orientations : used to calculate the positions of the antennas on the arms of the starshape (!!in m!!)
+        Parameters that determine antenna ring size, number of rings and antenna arm orientations.
+        Do not change unless you know what you are doing!
+
+    antenna_rings :  array of antenna ring radii (in m!)
+        predefined list of antenna ring radii
+
+    slicing_method, slices: 
+
+    gamma_cut:
+
+    vxB_plot: bool
     """
 
+    # make empty .list file if already existent
     if not append or not os.path.exists(filename):
         fout = open(filename, 'w')
         fout.close()

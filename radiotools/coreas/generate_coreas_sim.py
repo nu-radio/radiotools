@@ -5,6 +5,7 @@ import numpy as np
 from radiotools import coordinatesystems
 from radiotools import helper as hp
 from past.builtins import xrange
+import sys
 
 
 # $_CONDOR_SCRATCH_DIR
@@ -255,7 +256,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
     deltay = np.sin(azimuth) * r
 
     # print information about input processing
-    print(f"Generating antenna positions at observation level {obslevel} m.")
+    print(f"Generating antenna positions at observation level {obs_level} m.")
     print(f"Zenith: {np.rad2deg(zenith)} degrees - in Corsika convention")
 
     # define angle for Auger rotation 
@@ -341,7 +342,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
                 # write transformed coordinates into kartesian vector and 
                 # set z coordinate to observation level
-                gp_position = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obslevel])
+                gp_position = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obs_level])
 
                 # write all station positions into list for plot in vxB coordinates
                 station_positions_groundsystem.append(gp_position)
@@ -364,7 +365,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 # write transformed coordinates into kartesian vector and 
                 # add observation level to z coordinate
                 # and finally convert to cm (Corsika's favourite unit)
-                sp_position = np.array([100 * pos[0], 100 * pos[1], 100 * (pos[2] + obslevel)])
+                sp_position = np.array([100 * pos[0], 100 * pos[1], 100 * (pos[2] + obs_level)])
 
                 # write all station positions into list for plot in vxB coordinates
                 station_positions_groundsystem.append(sp_position)

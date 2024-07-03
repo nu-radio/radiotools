@@ -248,15 +248,64 @@ def write_list_star_pattern(filename, zenith, azimuth,
     if obs_level_corsika is None:
         obs_level_corsika = obs_level
 
-    # compute translation in x and y
-    r = np.tan(zen) * (obs_level - obs_level_corsika)
-    deltax = np.cos(az) * r
-    deltay = np.sin(az) * r
+    # compute translation in x and y if corsika observation level is specified, otheriwse shift is zero
+    r = np.tan(zenith) * (obs_level - obs_level_corsika)
+    deltax = np.cos(azimuth) * r
+    deltay = np.sin(azimuth) * r
 
-    fout = open(filename, 'a')
-    B = np.array([0, np.cos(inc), -np.sin(inc)])
-    cs = coordinatesystems.cstrafo(zen, az, magnetic_field_vector=B)
-    observation_plane_string = "gp"
+    # print information about input processing
+    print(f"Generating antenna positions at observation level {obslevel} m.")
+    print(f"Zenith: {np.rad2deg(zenith)} degrees - in Corsika convention")
+
+    # define angle for Auger rotation 
+    # set as 0 degrees for Corsika input
+    # Auger coordinates are Corsika coordinates rotated by -90 degrees
+    # so: x direction = East, y direction = North
+    if Auger_CS == True:
+          rot_angle = np.deg2rad(270)
+          # save corsika azimuth angle for output
+          corsika_azimuth = np.round(np.rad2deg(azimuth) - 270, decimals=2)
+          # print Corsika input angle for Auger input
+          print(f"Azimuth: {corsika_azimuth} degrees - in Corsika convention")
+
+
+    elif Auger_CS == False:
+          rot_angle = 0
+          # save corsika azimuth angle for output
+          corsika_azimuth = np.round(np.rad2deg(azimuth) - 180, decimals=2)
+          # print Corsika input angle
+          print(f"azimuth: {corsika_azimuth} degrees - in Corsika convention")
+
+    else:  # dealing with wrong input choices:
+        sys.exit("Invalid input. Possible options for Auger_CS are 'True' or 'False'. \n Quitting...")
+
+
+    print("These are the angles that should be in the Corsika input file!!!")
+
+    # rotation matrix for transformation between Auger and Corsika coordinate system
+    # rotation matrix for rotation around z-axis
+    # if Auger_CS=False, this is an identity matrix
+    rotation_z_axis = np.array([[np.cos(rot_angle),  (-1) * np.sin(rot_angle), 0], \
+                      [np.sin(rot_angle), np.cos(rot_angle), 0], \
+                      [0, 0, 1]])
+    
+    # inverse rotation matrix for magnetic field vector
+    inverse_rotation = np.linalg.inv(rotation_z_axis)
+ 
+    # compute the B field in Corsika system (x direction = North, y direction = West) from inclination of geomagnetic field given in input
+    B_field = np.array([np.cos(inclination), 0, -np.sin(inclination)])
+    print("Magnetic field vector: ", B_field)
+    print("Magnetic field inclination", np.rad2deg(inclination))
+
+    # rotate magnetic field vector vertical axis in opposite direction of station coordinates
+    # depends on Auger_CS
+    B_field = np.dot(inverse_rotation, B_field)
+
+    # define shower plane coordinate system from given geometry
+    cs = coordinatesystems.cstrafo(zenith, azimuth, magnetic_field_vector=B_field)
+
+    # string for the end of the antenna names
+    observation_plane_string = "gp" # short for groundplane
     if not ground_plane:
         observation_plane_string = "sp"
 

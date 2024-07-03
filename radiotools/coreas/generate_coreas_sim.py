@@ -401,6 +401,9 @@ def write_list_star_pattern(filename, zenith, azimuth,
                         for iG, gcut in enumerate(gammacut):
                             name_gamma = "%s_gamma%i" % (name, iG)
                             fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(x, y, z, name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
+    
+    print("Saved antenna positions (in groundplane coordinates) to file: ", filename)
+
     fout.close()
 
 

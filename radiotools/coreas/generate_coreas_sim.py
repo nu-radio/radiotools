@@ -342,18 +342,14 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
                 # write transformed coordinates into kartesian vector and 
                 # set z coordinate to observation level
-                gp_position = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obs_level])
+                antennas = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obs_level])
 
                 # write all station positions into list for plot in vxB coordinates
-                station_positions_groundsystem.append(gp_position)
+                station_positions_groundsystem.append(antennas)
 
                 # apply rotation matrix to stations
                 # Corsika input will stay the same, Auger input will be rotated by -90 degrees
-                gp_position = np.dot(rotation_z_axis, gp_position)
-
-                # save the generated starshapes to the antenna.list file
-                # positions in cm
-                fout.write(f"AntennaPosition = {gp_position[0]} {gp_position[1]} {gp_position[2]} {name}\n")
+                antennas = np.dot(rotation_z_axis, antennas)
 
             else:
                 # transform station positions to ground plane coordinates
@@ -365,18 +361,14 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 # write transformed coordinates into kartesian vector and 
                 # add observation level to z coordinate
                 # and finally convert to cm (Corsika's favourite unit)
-                sp_position = np.array([100 * pos[0], 100 * pos[1], 100 * (pos[2] + obs_level)])
+                antennas = np.array([100 * pos[0], 100 * pos[1], 100 * (pos[2] + obs_level)])
 
                 # write all station positions into list for plot in vxB coordinates
-                station_positions_groundsystem.append(sp_position)
+                station_positions_groundsystem.append(antennas)
 
                 # apply rotation matrix to stations
                 # Corsika input will stay the same, Auger input will be rotated by -90 degrees
-                sp_position = np.dot(rotation_z_axis, sp_position)
-
-                # save the generated starshapes to the antenna.list file
-                # positions in cm
-                fout.write(f"AntennaPosition = {sp_position[0]} {sp_position[1]} {sp_position[2]} {name}\n")
+                antennas = np.dot(rotation_z_axis, antennas)
 
             if(slicing_method is None):
                 if gammacut is None:

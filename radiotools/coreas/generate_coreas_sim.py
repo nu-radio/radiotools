@@ -316,15 +316,25 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
     # if provided, add an additional antenna in the middle
     else:
-        n_rings = len(rs)
-        rs = np.append(0, rs)
-    for i in np.arange(1, n_rings + 1):
-        for j in np.arange(len(azimuths)):
-            station_position = rs[i] * hp.spherical_to_cartesian(np.pi * 0.5, azimuths[j])
-            # name = "pos_%i_%i" % (rs[i], np.rad2deg(azimuths[j]))
-            name = "pos_%i_%i_%.0f_%s" % (rs[i], np.rad2deg(azimuths[j]), obs_level, observation_plane_string)
-            if(ground_plane):
+        n_rings = len(antenna_rings)
+        antenna_rings = np.append(0, antenna_rings)
+
+    # array to save all station positions in
+    station_positions_groundsystem = []
+
+    # loop to put define antennas at the specified positions
+    for i in np.arange(1, n_rings + 1): # loop over number of antenna rings
+        for j in np.arange(len(arm_orientiations)): # loop over number of arms
+             # place antennas along arm in shower plane coordinates
+            station_position = antenna_rings[i] * hp.spherical_to_cartesian(np.pi * 0.5, arm_orientiations[j])
+            # set antenna name
+            name = "pos_%i_%i_%.0f_%s" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), obs_level, observation_plane_string)
+
+            # for ground plane antenna array
+            if(ground_plane==True):
+                # transform station positions to ground plane coordinates and set all the z coordinates to 0
                 pos_2d = cs.transform_from_vxB_vxvxB_2D(station_position)  # position if height in observer plane should be zero
+                # add xy shift if applicable
                 pos_2d[0] += deltax
                 pos_2d[1] += deltay
                 x, y, z = 100 * pos_2d[1], -100 * pos_2d[0], 100 * obs_level

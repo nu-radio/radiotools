@@ -354,7 +354,9 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 fout.write(f"AntennaPosition = {gp_position[0]} {gp_position[1]} {gp_position[2]} {name}\n")
 
             else:
+                # transform station positions to ground plane coordinates
                 pos = cs.transform_from_vxB_vxvxB(station_position)
+                # add xy shift if applicable
                 pos[0] += deltax
                 pos[1] += deltay
 
@@ -379,7 +381,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
                     fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(x, y, z, name))
                 else:
                     for iG, gcut in enumerate(gammacut):
-                        name = "pos_%i_%i_gamma%i" % (rs[i], np.rad2deg(azimuths[j]), iG)
+                        name = "pos_%i_%i_gamma%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iG)
                         fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(x, y, z, name, gcut[0], gcut[1]))
             else:
                 if(len(slices) <= 1):
@@ -392,7 +394,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 if(slicing_method == "distance"):
                     slices *= 100
                 for iSlice in xrange(len(slices) - 1):
-                    name = "pos_%i_%i_slice%i" % (rs[i], np.rad2deg(azimuths[j]), iSlice)
+                    name = "pos_%i_%i_slice%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iSlice)
                     if gammacut is None:
                         fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
                     else:

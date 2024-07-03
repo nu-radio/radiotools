@@ -337,12 +337,43 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 # add xy shift if applicable
                 pos_2d[0] += deltax
                 pos_2d[1] += deltay
-                x, y, z = 100 * pos_2d[1], -100 * pos_2d[0], 100 * obs_level
+
+                # write transformed coordinates into kartesian vector and 
+                # set z coordinate to observation level
+                gp_position = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obslevel])
+
+                # write all station positions into list for plot in vxB coordinates
+                station_positions_groundsystem.append(gp_position)
+
+                # apply rotation matrix to stations
+                # Corsika input will stay the same, Auger input will be rotated by -90 degrees
+                gp_position = np.dot(rotation_z_axis, gp_position)
+
+                # save the generated starshapes to the antenna.list file
+                # positions in cm
+                fout.write(f"AntennaPosition = {gp_position[0]} {gp_position[1]} {gp_position[2]} {name}\n")
+
             else:
                 pos = cs.transform_from_vxB_vxvxB(station_position)
                 pos[0] += deltax
                 pos[1] += deltay
-                x, y, z = 100 * pos[1], -100 * pos[0], 100 * (pos[2] + obs_level)
+
+                # write transformed coordinates into kartesian vector and 
+                # add observation level to z coordinate
+                # and finally convert to cm (Corsika's favourite unit)
+                sp_position = np.array([100 * pos[0], 100 * pos[1], 100 * (pos[2] + obslevel)])
+
+                # write all station positions into list for plot in vxB coordinates
+                station_positions_groundsystem.append(sp_position)
+
+                # apply rotation matrix to stations
+                # Corsika input will stay the same, Auger input will be rotated by -90 degrees
+                sp_position = np.dot(rotation_z_axis, sp_position)
+
+                # save the generated starshapes to the antenna.list file
+                # positions in cm
+                fout.write(f"AntennaPosition = {sp_position[0]} {sp_position[1]} {sp_position[2]} {name}\n")
+
             if(slicing_method is None):
                 if gammacut is None:
                     fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(x, y, z, name))

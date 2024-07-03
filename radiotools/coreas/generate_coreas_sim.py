@@ -238,6 +238,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
     gamma_cut:
 
     vxB_plot: bool
+        True -> Produce additional list file with antenna position in the shower plane system for visual checks
     """
 
     # make empty .list file if already existent
@@ -405,6 +406,26 @@ def write_list_star_pattern(filename, zenith, azimuth,
     print("Saved antenna positions (in groundplane coordinates) to file: ", filename)
 
     fout.close()
+
+    # in case you want to plot the antennas in the shower plane coordinate system
+    # mainly for visual checking whether the starshape is ok
+    if vxB_plot==True:
+        # open the shower.list file to save the generated starshapes to
+        with open("shower_plane.list", "w") as file:
+                
+            # transform the station positions to vxB system for plot
+            shower_plane_system = cst.transform_to_vxB_vxvxB(np.array(station_positions_groundsystem))
+         
+            for i in range(len(shower_plane_system)):
+                # save the generated starshapes to the antenna.list file
+                # positions in cm
+                file.write(f"AntennaPosition = {shower_plane_system[i, 0]} {shower_plane_system[i, 1]} {shower_plane_system[i, 2]} {name}\n")
+            
+            print("Saved antenna positions (in vxB_vxvxB coordinates) to file: ", "shower_plane.list")
+
+
+    # return corsika azimuth angle to for automatically generating corsika input files with the right values
+    return corsika_azimuth
 
 
 # def write_list_multiple_heights(filename, zen, az, obs_level=[1564., 0.],

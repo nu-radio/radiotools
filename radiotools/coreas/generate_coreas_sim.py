@@ -410,7 +410,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
 # def write_list_multiple_heights(filename, zen, az, obs_level=[1564., 0.],
 #                                 inc=np.deg2rad(-35.7324), zero_height=True, r_min=0., r_max=500.,
 #                                 slicing_method="", slices=[], n_rings=20,
-#                                 azimuths=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
+#                                 arm_orientiations=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
 #                                 atm_model=1):
 #     """
 #     inc is the inclination of the magnetic field from CoREAS repo (at AERA site)
@@ -439,8 +439,8 @@ def write_list_star_pattern(filename, zenith, azimuth,
 #                        np.linspace(rmax * 0.20, rmax, 17)))
 #
 #         for i, r in enumerate(rs):
-#             for j in np.arange(len(azimuths)):
-#                 station_position = rs[i] * hp.SphericalToCartesian(np.pi * 0.5, azimuths[j])
+#             for j in np.arange(len(arm_orientiations)):
+#                 station_position = rs[i] * hp.SphericalToCartesian(np.pi * 0.5, arm_orientiations[j])
 #                 pos = cs.transform_from_vxB_vxvxB(station_position)
 #                 pos_2d = cs.transform_from_vxB_vxvxB_2D(station_position)  # position if height in observer plane should be zero
 #
@@ -449,7 +449,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
 #                 pos_2d[0] += deltax
 #                 pos_2d[1] += deltay
 #
-#                 name = "pos_%i_%i_%.0f_%.0f" % (rs[i], np.rad2deg(azimuths[j]), Xst, h)
+#                 name = "pos_%i_%i_%.0f_%.0f" % (rs[i], np.rad2deg(arm_orientiations[j]), Xst, h)
 #                 x, y, z = 100 * pos[1], -100 * pos[0], 100 * (pos[2] + h)
 #                 if(zero_height):
 #                     x, y, z = 100 * pos_2d[1], -100 * pos_2d[0], 100 * h

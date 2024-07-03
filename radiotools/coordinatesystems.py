@@ -62,13 +62,6 @@ class cstrafo():
         e2 /= linalg.norm(e2)
         e3 /= linalg.norm(e3)
 
-        # print("magnetic field vector: ", magnetic_field_vector)
-        # print("normed magnetic field vector: ", magnetic_field_normalized)
-        # print("vxB trafo matrix:")
-        # print(e1)
-        # print(e2)
-        # print(e3)
-
         self.__transformation_matrix_vBvvB = copy.copy(np.matrix([e1, e2, e3]))
         self.__inverse_transformation_matrix_vBvvB = np.linalg.inv(
             self.__transformation_matrix_vBvvB)

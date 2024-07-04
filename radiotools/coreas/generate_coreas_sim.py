@@ -241,6 +241,19 @@ def write_list_star_pattern(filename, zenith, azimuth,
         True -> Produce additional list file with antenna position in the shower plane system for visual checks
     """
 
+    # errors that catch when input is in wrong unit
+    if obs_level > 10000:
+        sys.exit("Observation level likely given in cm. Must be given in meters!")
+    
+    if np.abs(zenith) > 7:
+        sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
+
+    if np.abs(azimuth) > 7:
+        sys.exit("Azimuth angle likely given in degrees. Must be given in radians!")
+
+    if np.abs(inclination) > 7:
+        sys.exit("Magnetic field inclination angle likely given in degrees. Must be given in radians!")
+
     # make empty .list file if already existent
     if not append or not os.path.exists(filename):
         fout = open(filename, 'w')

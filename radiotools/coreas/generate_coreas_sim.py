@@ -344,6 +344,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
                 # write transformed coordinates into kartesian vector and 
                 # set z coordinate to observation level
+                # and finally convert to cm (Corsika's favourite unit)
                 antennas = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obs_level])
 
                 # write all station positions into list for plot in vxB coordinates

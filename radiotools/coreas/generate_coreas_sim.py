@@ -4,7 +4,6 @@ import stat
 import numpy as np
 from radiotools import coordinatesystems
 from radiotools import helper as hp
-from past.builtins import xrange
 import sys
 
 
@@ -174,7 +173,7 @@ def write_list(filename, station_positions, station_name=None, append=False):
 
 def write_list_star_pattern(filename, zenith, azimuth, 
                             append=False, 
-                            obs_level=1564.0, 
+                            obs_level=1400.0, 
                             obs_level_corsika=None, 
                             ground_plane=True,
                             Auger_CS=True,
@@ -392,7 +391,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 slices = np.array(slices)
                 if(slicing_method == "distance"):
                     slices *= 100
-                for iSlice in xrange(len(slices) - 1):
+                for iSlice in range(len(slices) - 1):
                     name = "pos_%i_%i_slice%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iSlice)
                     if gammacut is None:
                         # save the generated starshapes to the antenna list file

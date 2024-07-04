@@ -246,6 +246,9 @@ def write_list_star_pattern(filename, zenith, azimuth,
         fout = open(filename, 'w')
         fout.close()
 
+    # open antenna file for writing
+    fout = open(filename, 'a')
+
     if obs_level_corsika is None:
         obs_level_corsika = obs_level
 

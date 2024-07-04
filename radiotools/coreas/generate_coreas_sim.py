@@ -446,6 +446,56 @@ def write_list_star_pattern(filename, zenith, azimuth,
     return corsika_azimuth
 
 
+def get_rmax(X):
+    """ returns maximum axis distance in meter for a given simulation as
+    function of the atmosphere X in g/cm2 for a given atmosphere (and zenith angle) """
+    # rough hardcoded parametrisation...
+    return -148 + 0.712 * X
+
+
+def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_model=None):
+    # This is just validated for has shower
+    # is not even sopisticated
+
+    # obs_level has to be given in m
+    # zenith must be given in radians
+
+    # errors that catch when input is in wrong unit
+    if obs_level > 10000:
+            sys.exit("Observation level likely given in cm. Must be given in meters!")
+    
+    if zenith > 7:
+            sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
+
+    if at is None:
+        if atm_model is None:
+            sys.exit("No proper arguments for get_starshaped_pattern_radii")
+
+        at = models.Atmosphere(atm_model)
+
+    # calculate maximum distance of antenna from shower core (in shower plane)
+    # uses rough, hardcoded parametrisation
+    maxX = at.get_atmosphere(zenith, obs_level)
+    rmax = get_rmax(maxX)
+
+    # calculate cherenkov radius from zenith angle, depth of maximum, observation level, and atmosphere model
+    # uses 750 g/cm² as an approximation
+    # THIS IS ONLY (APPROX.) VALID FOR PROTONS AT ENERGIES: 10e16 - 10e19 eV
+    cherenkov_radius = get_cherenkov_radius_model_from_depth(zenith=zenith, depth=750, obs_level=obs_level, n0=n0, model=atm_model) # returns in m
+
+    r_cherenkov_upper_limit = (cherenkov_radius * 1.23 + 80)
+
+    # create list of antenna rings with denser rings within cherenkov radius and a little beyond
+    antenna_rings = np.append(0.005 * rmax, np.append(
+                   np.linspace(0.01 * rmax, r_cherenkov_upper_limit, 14, endpoint=False),
+                   np.linspace(r_cherenkov_upper_limit, rmax, 15)))
+    
+    # all lengths here are given in m for the input of the starshape generator function
+    # conversion to cm for the corsika output happens in that function!
+
+    return antenna_rings
+
+
 # def write_list_multiple_heights(filename, zen, az, obs_level=[1564., 0.],
 #                                 inc=np.deg2rad(-35.7324), zero_height=True, r_min=0., r_max=500.,
 #                                 slicing_method="", slices=[], n_rings=20,

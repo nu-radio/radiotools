@@ -377,13 +377,13 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 if gammacut is None:
                     # save the generated starshapes to the antenna list file
                     # positions in cm
-                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(antennas[0], antennas[1], antennas[1], name))
+                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(antennas[0], antennas[1], antennas[2], name))
                 else:
                     for iG, gcut in enumerate(gammacut):
                         name = "pos_%i_%i_gamma%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iG)
                         # save the generated starshapes to the antenna list file
                         # positions in cm
-                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(antennas[0], antennas[1], antennas[1], name, gcut[0], gcut[1]))
+                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(antennas[0], antennas[1], antennas[2], name, gcut[0], gcut[1]))
             else:
                 if(len(slices) <= 1):
                     print("ERROR: at least one slice must be specified")
@@ -399,13 +399,13 @@ def write_list_star_pattern(filename, zenith, azimuth,
                     if gammacut is None:
                         # save the generated starshapes to the antenna list file
                         # positions in cm
-                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(antennas[0], antennas[1], antennas[1], name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
+                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(antennas[0], antennas[1], antennas[2], name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
                     else:
                         for iG, gcut in enumerate(gammacut):
                             name_gamma = "%s_gamma%i" % (name, iG)
                             # save the generated starshapes to the antenna list file
                             # positions in cm
-                            fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(x, y, z, name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
+                            fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(antennas[0], antennas[1], antennas[2], name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
     
     print("Saved antenna positions (in groundplane coordinates) to file: ", filename)
 

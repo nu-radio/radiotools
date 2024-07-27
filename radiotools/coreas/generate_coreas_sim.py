@@ -173,12 +173,12 @@ def write_list(filename, station_positions, station_name=None, append=False):
 
 def write_list_star_pattern(filename, zenith, azimuth, 
                             append=False, 
-                            obs_level=1564.0, 
+                            obs_level=1400.0, 
                             obs_level_corsika=None, 
                             ground_plane=True,
                             Auger_CS=True,
                             inclination=np.deg2rad(-35.7324),
-                            r_min=0., r_max=500.,n_rings=30,
+                            r_min=0., r_max=500.,n_rings=20,
                             arm_orientiations=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
                             antenna_rings=None,
                             slicing_method=None, slices=[], 
@@ -241,10 +241,26 @@ def write_list_star_pattern(filename, zenith, azimuth,
         True -> Produce additional list file with antenna position in the shower plane system for visual checks
     """
 
+    # errors that catch when input is in wrong unit
+    if obs_level > 10000:
+        sys.exit("Observation level likely given in cm. Must be given in meters!")
+    
+    if np.abs(zenith) > 7:
+        sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
+
+    if np.abs(azimuth) > 7:
+        sys.exit("Azimuth angle likely given in degrees. Must be given in radians!")
+
+    if np.abs(inclination) > 7:
+        sys.exit("Magnetic field inclination angle likely given in degrees. Must be given in radians!")
+
     # make empty .list file if already existent
     if not append or not os.path.exists(filename):
         fout = open(filename, 'w')
         fout.close()
+
+    # open antenna file for writing
+    fout = open(filename, 'a')
 
     if obs_level_corsika is None:
         obs_level_corsika = obs_level
@@ -341,6 +357,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
                 # write transformed coordinates into kartesian vector and 
                 # set z coordinate to observation level
+                # and finally convert to cm (Corsika's favourite unit)
                 antennas = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obs_level])
 
                 # write all station positions into list for plot in vxB coordinates
@@ -374,13 +391,13 @@ def write_list_star_pattern(filename, zenith, azimuth,
                 if gammacut is None:
                     # save the generated starshapes to the antenna list file
                     # positions in cm
-                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(antennas[0], antennas[1], antennas[1], name))
+                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(antennas[0], antennas[1], antennas[2], name))
                 else:
                     for iG, gcut in enumerate(gammacut):
                         name = "pos_%i_%i_gamma%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iG)
                         # save the generated starshapes to the antenna list file
                         # positions in cm
-                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(antennas[0], antennas[1], antennas[1], name, gcut[0], gcut[1]))
+                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(antennas[0], antennas[1], antennas[2], name, gcut[0], gcut[1]))
             else:
                 if(len(slices) <= 1):
                     print("ERROR: at least one slice must be specified")
@@ -396,13 +413,13 @@ def write_list_star_pattern(filename, zenith, azimuth,
                     if gammacut is None:
                         # save the generated starshapes to the antenna list file
                         # positions in cm
-                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(antennas[0], antennas[1], antennas[1], name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
+                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(antennas[0], antennas[1], antennas[2], name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
                     else:
                         for iG, gcut in enumerate(gammacut):
                             name_gamma = "%s_gamma%i" % (name, iG)
                             # save the generated starshapes to the antenna list file
                             # positions in cm
-                            fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(x, y, z, name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
+                            fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(antennas[0], antennas[1], antennas[2], name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
     
     print("Saved antenna positions (in groundplane coordinates) to file: ", filename)
 
@@ -427,6 +444,56 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
     # return corsika azimuth angle to for automatically generating corsika input files with the right values
     return corsika_azimuth
+
+
+def get_rmax(X):
+    """ returns maximum axis distance in meter for a given simulation as
+    function of the atmosphere X in g/cm2 for a given atmosphere (and zenith angle) """
+    # rough hardcoded parametrisation...
+    return -148 + 0.712 * X
+
+
+def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_model=None):
+    # This is just validated for has shower
+    # is not even sopisticated
+
+    # obs_level has to be given in m
+    # zenith must be given in radians
+
+    # errors that catch when input is in wrong unit
+    if obs_level > 10000:
+            sys.exit("Observation level likely given in cm. Must be given in meters!")
+    
+    if zenith > 7:
+            sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
+
+    if at is None:
+        if atm_model is None:
+            sys.exit("No proper arguments for get_starshaped_pattern_radii")
+
+        at = models.Atmosphere(atm_model)
+
+    # calculate maximum distance of antenna from shower core (in shower plane)
+    # uses rough, hardcoded parametrisation
+    maxX = at.get_atmosphere(zenith, obs_level)
+    rmax = get_rmax(maxX)
+
+    # calculate cherenkov radius from zenith angle, depth of maximum, observation level, and atmosphere model
+    # uses 750 g/cm² as an approximation
+    # THIS IS ONLY (APPROX.) VALID FOR PROTONS AT ENERGIES: 10e16 - 10e19 eV
+    cherenkov_radius = get_cherenkov_radius_model_from_depth(zenith=zenith, depth=750, obs_level=obs_level, n0=n0, model=atm_model) # returns in m
+
+    r_cherenkov_upper_limit = (cherenkov_radius * 1.23 + 80)
+
+    # create list of antenna rings with denser rings within cherenkov radius and a little beyond
+    antenna_rings = np.append(0.005 * rmax, np.append(
+                   np.linspace(0.01 * rmax, r_cherenkov_upper_limit, 14, endpoint=False),
+                   np.linspace(r_cherenkov_upper_limit, rmax, 15)))
+    
+    # all lengths here are given in m for the input of the starshape generator function
+    # conversion to cm for the corsika output happens in that function!
+
+    return antenna_rings
 
 
 # def write_list_multiple_heights(filename, zen, az, obs_level=[1564., 0.],

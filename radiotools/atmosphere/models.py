@@ -835,7 +835,7 @@ class Atmosphere():
             x0 = get_distance_for_height_above_ground(self._get_vertical_height_flat(zenith[i], X[i]), zenith[i])
 
             # finding root e.g., distance for given xmax (when difference is 0)
-            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6, args=(zenith[i], X[i]))
+            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 2e4, xtol=1e-6, args=(zenith[i], X[i]))
 
             height[i] = get_height_above_ground(
                 dxmax_geo, zenith[i], observation_level=observation_level) + observation_level
@@ -863,7 +863,7 @@ class Atmosphere():
             x0 = get_distance_for_height_above_ground(self._get_vertical_height_flat(zenith[i], X[i]), zenith[i])
 
             # finding root e.g., distance for given xmax (when difference is 0)
-            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 1e4, xtol=1e-6, args=(zenith[i], X[i]))
+            dxmax_geo = optimize.brentq(ftmp, -1e3, x0 + 2e4, xtol=1e-6, args=(zenith[i], X[i]))
 
             height[i] = get_height_above_ground(
                 dxmax_geo, zenith[i], observation_level=observation_level) + observation_level

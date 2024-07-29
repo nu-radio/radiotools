@@ -348,7 +348,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
             name = "pos_%i_%i_%.0f_%s" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), obs_level, observation_plane_string)
 
             # for ground plane antenna array
-            if(ground_plane==True):
+            if ground_plane:
                 # transform station positions to ground plane coordinates and set all the z coordinates to 0
                 pos_2d = cs.transform_from_vxB_vxvxB_2D(station_position)  # position if height in observer plane should be zero
                 # add xy shift if applicable
@@ -427,7 +427,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
     # in case you want to plot the antennas in the shower plane coordinate system
     # mainly for visual checking whether the starshape is ok
-    if vxB_plot==True:
+    if vxB_plot:
         # open the shower.list file to save the generated starshapes to
         with open("shower_plane.list", "w") as file:
                 

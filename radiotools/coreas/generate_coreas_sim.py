@@ -554,7 +554,7 @@ def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_mo
 #                     slices = np.array(slices)
 #                     if(slicing_method == "distance"):
 #                         slices *= 100
-#                     for iSlice in xrange(len(slices) - 1):
+#                     for iSlice in range(len(slices) - 1):
 #                         fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
 #     fout.close()
 

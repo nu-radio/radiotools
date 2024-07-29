@@ -4,7 +4,9 @@ import stat
 import numpy as np
 from radiotools import coordinatesystems
 from radiotools import helper as hp
+from radiotools.atmosphere import models
 import sys
+from miniradiotools.utils.cherenkov_radius import get_cherenkov_radius_model_from_depth
 
 
 # $_CONDOR_SCRATCH_DIR
@@ -243,13 +245,10 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
     # errors that catch when input is in wrong unit
     if obs_level > 10000:
-        sys.exit("Observation level likely given in cm. Must be given in meters!")
+        sys.exit(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
     
     if np.abs(zenith) > 7:
         sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
-
-    if np.abs(azimuth) > 7:
-        sys.exit("Azimuth angle likely given in degrees. Must be given in radians!")
 
     if np.abs(inclination) > 7:
         sys.exit("Magnetic field inclination angle likely given in degrees. Must be given in radians!")
@@ -462,7 +461,7 @@ def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_mo
 
     # errors that catch when input is in wrong unit
     if obs_level > 10000:
-            sys.exit("Observation level likely given in cm. Must be given in meters!")
+            sys.exit(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
     
     if zenith > 7:
             sys.exit("Zenith angle likely given in degrees. Must be given in radians!")

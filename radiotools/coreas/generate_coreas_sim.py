@@ -452,14 +452,35 @@ def write_list_star_pattern(filename, zenith, azimuth,
     return corsika_azimuth
 
 
-def get_rmax(X):
-    """ returns maximum axis distance in meter for a given simulation as
-    function of the atmosphere X in g/cm2 for a given atmosphere (and zenith angle) """
+def get_rmax(X_obs):
+    """ 
+    WARNING: this is just a very rough approximation in order to generate antenna patterns
+    of the right size for starshape simulations
+
+
+    Parameters:
+
+    X_obs: Grammage at observation level (in g/cm^2)
+
+    Returns: 
+        Returns maximum axis distance in meter for a given simulation as
+        function of the grammage at observation level X_obs in g/cm2 for a given atmosphere and zenith angle
+    """
     # rough hardcoded parametrisation...
-    return -148 + 0.712 * X
+    return -148 + 0.712 * X_obs
 
 
 def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_model=None):
+    """
+    function to generate starshape antenna pattern with certain features:
+
+    Dense core 
+
+    Dense rings up to just outside the cherenkov ring
+
+    Sparse up to multiple times of the cherenkov radius
+    """
+
     # This is just validated for has shower
     # is not even sopisticated
 

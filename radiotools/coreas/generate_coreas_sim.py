@@ -6,8 +6,8 @@ from radiotools import coordinatesystems
 from radiotools import helper as hp
 from radiotools.atmosphere import models
 import sys
-from miniradiotools.utils.cherenkov_radius import get_cherenkov_radius_model_from_depth
 
+from radiotools.atmosphere.cherenkov_radius import get_cherenkov_radius_model_from_depth
 
 # $_CONDOR_SCRATCH_DIR
 

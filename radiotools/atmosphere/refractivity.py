@@ -3,7 +3,6 @@ from radiotools import helper
 
 import numpy as np
 import sys
-import copy
 import os
 
 
@@ -20,14 +19,15 @@ def n_param_ZHAireS(h):
     Parametrisation for the refractivity N = n - 1, as funtion of height above sea level N(h) as used in ZHAireS.
 
     Parameters
-    ------------
+    ----------
     h : float
         Height over sea level in meter
 
     Returns
-    --------
+    -------
+
     refractivity : float
-        N(h)
+        Refractive index for given height
     """
 
     a = 325e-6
@@ -42,27 +42,29 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refrac
     p1 and p2 need to be in the same coordiate system with the origin at sea level.
 
     Parameters
-    ------------
+    ----------
+
     p1 : array (3,)
         coordinates in meter.
     p2 : array (3,)
         coordinates in meter.
     atm_model : int
         Number of the atmospheric model (from radiotools.atmosphere.models) which provides the desity profile rho(h)
-        to calculate the refractivity via Gladstone–Dale relation: N(h) = N(0) * rho(h) / rho(0). 
+        to calculate the refractivity via Gladstone-Dale relation: N(h) = N(0) * rho(h) / rho(0).
         Is only used if "table" is not None (default: None)
     refractivity_at_sea_level : float
-        Refractivity at earth surface, i.e., N(0) (default: None). Necessary if refractivity is calculated 
-        via Gladstone–Dale relation. Not necessary/used if a RefractivityTable is given.
-    table : RefractivityTable 
-        If given, used to determine N(h). Instead of using Gladstone–Dale relation. (default: None)   
+        Refractivity at earth surface, i.e., N(0) (default: None). Necessary if refractivity is calculated
+        via Gladstone-Dale relation. Not necessary/used if a RefractivityTable is given.
+    table : RefractivityTable
+        If given, used to determine N(h). Instead of using Gladstone-Dale relation. (default: None)
     debug : bool
         If True, prints out debug output (default: False).
 
-
     Returns
-    --------
-    integrated refractivity : float
+    -------
+
+    integrated_refractivity : float
+        Refractive index integrated along a straight line between two given points
     """
 
     if table is None and (atm_model is None and refractivity_at_sea_level is None):
@@ -105,7 +107,8 @@ class RefractivityTable(object):
 
         """
         Parameters
-        ------------
+        ----------
+
         atm_model : int
             Number of the atmospheric model (from radiotools.atmosphere.models) which provides the desity profile rho(h)
             to calculate the refractivity via N(h) = N(0) * rho(h) / rho(0) (Only if param is False).
@@ -141,7 +144,7 @@ class RefractivityTable(object):
             self._height_increment = 10
             self._max_heigth = 4e4
             self._heights = np.arange(0, self._max_heigth, self._height_increment)
-        
+
             rho0 = atm.get_density(0, allow_negative_heights=False, model=self._atm_model)
             if self._use_param:
                 self._refractivity_table = np.array([n_param_ZHAireS(h) - 1 for h in self._heights])
@@ -165,21 +168,23 @@ class RefractivityTable(object):
     def parse_gdas_file(self, gdas_file):
         with open(gdas_file, "r") as f:
             lines = f.readlines()
-            
-            atm_para = [l.strip("\n").split() for l in lines[1:5]]
+
+            # atm_para = [line.strip("\n").split() for line in lines[1:5]]
             self._heights = np.zeros(len(lines) - 6)
             self._refractivity_table = np.zeros(len(lines) - 6)
-            for idx, l in enumerate(lines[6:]):
-                h, n = l.strip("\n").split()
+            for idx, line in enumerate(lines[6:]):
+                h, n = line.strip("\n").split()
                 self._heights[idx] = float(h)
                 self._refractivity_table[idx] = float(n) - 1
+
             self._height_increment = self._heights[1] - self._heights[0]
             self._max_heigth = np.amax(self._heights)
 
-            # just take the "layer" closet value to 0 (sea level) if its within 1m. This is stupid but should accurate enought. 
+            # just take the "layer" closet value to 0 (sea level) if its within 1m. This is stupid but should accurate enought.
             null = np.argmin(np.abs(self._heights))
             if np.abs(self._heights[null]) > 1:
                 sys.exit("Could not find refractive index at sea level in gdas profile. stop...")
+
             self._refractivity_at_sea_level = self._refractivity_table[null]
 
 
@@ -190,6 +195,7 @@ class RefractivityTable(object):
         self._distance_increment = data["distance_increment"]
         self._distances = data["distances"]
         self._zeniths = data["zeniths"]
+
 
     def get_cached_table_curved_atmosphere(self):
         """
@@ -214,7 +220,7 @@ class RefractivityTable(object):
             print("Write {} ...".format(fname))
 
             # anchors for table binned in tan.
-            self._zeniths = np.arctan(np.linspace(np.tan(self._min_zenith), 
+            self._zeniths = np.arctan(np.linspace(np.tan(self._min_zenith),
                                                   np.tan(self._max_zenith), self._number_of_zenith_bins))
             self._distances = []
             self._refractivity_integrated_table = []
@@ -243,8 +249,8 @@ class RefractivityTable(object):
 
     def get_refractivity_for_height_tabulated(self, h):
         """
-            Get refractivity as function of height above ground from pre-calculated table.
-            Linear interpolation between table anchors.
+        Get refractivity as function of height above ground from pre-calculated table.
+        Linear interpolation between table anchors.
         """
 
         if h == 0:
@@ -264,8 +270,8 @@ class RefractivityTable(object):
 
     def get_integrated_refractivity_for_height_tabulated(self, h):
         """
-            Get integrated refractivity as function of height above ground from pre-calculated table.
-            Linear interpolation between table anchors.
+        Get integrated refractivity as function of height above ground from pre-calculated table.
+        Linear interpolation between table anchors.
         """
         if h == 0:
             return self._refractivity_at_sea_level
@@ -286,9 +292,9 @@ class RefractivityTable(object):
 
     def _get_integrated_refractivity_for_distance(self, d, zenith):
         """
-            Get integrated refractivity as function of the zenith angle and distance from ground
-            (along a axis with the specified zenith angle) from pre-calculated table. 
-            Takes clostest zenith angle from table to calculated the refractivity.
+        Get integrated refractivity as function of the zenith angle and distance from ground
+        (along a axis with the specified zenith angle) from pre-calculated table.
+        Takes clostest zenith angle from table to calculated the refractivity.
         """
         if not self._curved:
             sys.exit("Table not available: please specifiy \"curved=True\"")
@@ -327,10 +333,11 @@ class RefractivityTable(object):
 
 
     def get_integrated_refractivity_for_distance(self, d, zenith):
-        """ Get integrated refractivity as function of the zenith angle and distance from ground
-            (along a axis with the specified zenith angle) from pre-calculated table.
-            If "_interpolate_zenith" is True, a linear interpolation in zenith angle is performed,
-            otherwise the clostest zenith angle bin is used for the calculation.
+        """
+        Get integrated refractivity as function of the zenith angle and distance from ground
+        (along a axis with the specified zenith angle) from pre-calculated table.
+        If "_interpolate_zenith" is True, a linear interpolation in zenith angle is performed,
+        otherwise the clostest zenith angle bin is used for the calculation.
         """
         if not self._curved:
             sys.exit("Table not available: please specifiy \"curved=True\"")
@@ -420,9 +427,10 @@ if __name__ == "__main__":
     from scipy import constants
     from collections import defaultdict
 
-    tab_flat = RefractivityTable(atm_model=27, curved=False, number_of_zenith_bins=1000)
-    tab = RefractivityTable(atm_model=27, interpolate_zenith=True, curved=True, number_of_zenith_bins=1000)
-    at = atm.Atmosphere(27)
+    atm_model = 27
+    tab_flat = RefractivityTable(atm_model=atm_model, curved=False, number_of_zenith_bins=1000)
+    tab = RefractivityTable(atm_model=atm_model, interpolate_zenith=True, curved=True, number_of_zenith_bins=1000)
+    at = atm.Atmosphere(atm_model)
 
     data = defaultdict(list)
 

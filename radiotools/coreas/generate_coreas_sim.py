@@ -255,10 +255,10 @@ def write_list_star_pattern(filename, zenith, azimuth,
         sys.exit(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
     
     if np.abs(zenith) > 7:
-        sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
+        sys.exit("Zenith angle likely given in degrees: {zenith}. Must be given in radians!")
 
     if np.abs(inclination) > 7:
-        sys.exit("Magnetic field inclination angle likely given in degrees. Must be given in radians!")
+        sys.exit("Magnetic field inclination angle likely given in degrees: {inclination}. Must be given in radians!")
 
     # make empty .list file if already existent
     if not append or not os.path.exists(filename):
@@ -284,7 +284,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
     # set as 0 degrees for Corsika input
     # Auger coordinates are Corsika coordinates rotated by -90 degrees
     # so: x direction = East, y direction = North
-    if Auger_CS == True:
+    if Auger_CS:
           rot_angle = np.deg2rad(270)
           # save corsika azimuth angle for output
           corsika_azimuth = np.round(np.rad2deg(azimuth) - 270, decimals=2)
@@ -292,7 +292,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
           print(f"Azimuth: {corsika_azimuth} degrees - in Corsika convention")
 
 
-    elif Auger_CS == False:
+    if not Auger_CS:
           rot_angle = 0
           # save corsika azimuth angle for output
           corsika_azimuth = np.round(np.rad2deg(azimuth) - 180, decimals=2)

@@ -198,11 +198,9 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
     zenith :  float (in radians)
         zenith angle of the incoming signal/air-shower direction (0 deg is pointing vertically upwards)
-        Is converted to radians immediately
 
     azimuth :  float (in radians)
         azimuth angle of the incoming signal/air-shower direction (0 deg is North, 90 deg is West)
-        Is converted to radians immediately
 
     obslevel :  float (!!in m!!)
         Observation level of the detector in the vertical direction
@@ -226,16 +224,25 @@ def write_list_star_pattern(filename, zenith, azimuth,
     inclination :  float (in radians)
         Inclination of the magnetic field.
         It describes the angle between the Earth's surface and the magnetic field lines.
+        It is used to determine the shower plane coordinate system which is heavily dependent on the orientation of the magnetic field.
         The default value is given for the Auger site
 
-    Rmin, Rmax, n_rings, arm_orientations : used to calculate the positions of the antennas on the arms of the starshape (!!in m!!)
-        Parameters that determine antenna ring size, number of rings and antenna arm orientations.
-        Do not change unless you know what you are doing!
+    r_min, r_max: float (in m)
+        Minimum and maximum radius of antenna rings if no predefined rings are given
+    
+    n_rings:
+        Number of antenna rings if no predefined rings are given
+    
+    arm_orientations : float(in radians)
+        Orientation angles of the arms that make up the antenna rings if no predefined rings are given.
+        Number of angles determines amount of antenna arms.
+        Default are 8 arms of equal radial distance.
 
     antenna_rings :  array of antenna ring radii (in m!)
         predefined list of antenna ring radii
 
     slicing_method, slices: 
+        Parameters for viewing the shower at different points in it development
 
     gamma_cut:
 

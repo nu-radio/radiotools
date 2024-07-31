@@ -266,8 +266,13 @@ def get_angle(v1, v2):
     Returns: float or list of floats
         angle(s) between vector(s)
     """
-
-    arccos = np.dot(v1, v2) / (np.linalg.norm(v1.T, axis=0) * np.linalg.norm(v2.T, axis=0))
+    
+    if v1.ndim == 2 and v2.ndim == 2:
+        arccos = np.array([
+            np.dot(v1_, v2_) / (np.linalg.norm(v1_.T, axis=0) * np.linalg.norm(v2_.T, axis=0))
+            for v1_, v2_ in zip(v1, v2)])
+    else:
+        arccos = np.dot(v1, v2) / (np.linalg.norm(v1.T, axis=0) * np.linalg.norm(v2.T, axis=0))
     # catch numerical overlow
     mask1 = arccos > 1
     mask2 = arccos < -1

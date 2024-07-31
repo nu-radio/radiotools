@@ -1,5 +1,6 @@
 import inspect, re
 import math
+import sys
 import os
 from matplotlib import colors as mcolors
 
@@ -13,7 +14,7 @@ import radiotools.stats
 def get_discrete_cmap(N, base_cmap='viridis'):
     cmap = plt.get_cmap(base_cmap, N)
     colors = []
-    N = np.int(N)
+    N = int(N)
     for i in range(N):
         if(i % 2 == 0):
             colors.append(cmap.colors[i // 2])
@@ -263,7 +264,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
     N = len(histograms)
     if((fig is None) or (axes is None)):
         if(N == 1):
-            fig, axes = get_histogram(histograms, bins=bins, xlabel=xlabels, ylabel=ylabels, title=titles,
+            fig, axes = get_histogram(histograms[0], bins=bins, xlabel=xlabels, ylabel=ylabels, title=titles,
                                       stats=stats, weights=weights)
             return fig, axes
         elif(N <= 3):
@@ -301,7 +302,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
     for i in range(N):
         xlabel = ""
         if xlabels:
-            if(type(xlabels) != np.str):
+            if(type(xlabels) != str):
                 xlabel = xlabels[i]
             else:
                 xlabel = xlabels
@@ -316,7 +317,7 @@ def get_histograms(histograms, bins=None, xlabels=None, ylabels=None, stats=True
         if titles:
             title = titles[i]
         if bins is not None:
-            if(type(bins) == np.int):
+            if(type(bins) == int):
                 tbin = bins
             else:
                 if (isinstance(bins[0], float) or isinstance(bins[0], int)):
@@ -368,7 +369,7 @@ def get_histogram(data, bins=10, xlabel="", ylabel="entries", weights=None,
     """ creates a histogram using matplotlib from array """
     if(ax is None):
         if figsize is None:
-            fig, ax1 = plt.subplots(1, 1)
+            fig, ax1 = plt.subplots(1, 1, figsize=(6, 6))
         else:
             fig, ax1 = plt.subplots(1, 1, figsize=figsize)
     else:
@@ -521,7 +522,7 @@ def get_histogram2d(x=None, y=None, z=None,
         else:
             sys.exit("Normalisation %s is not known.")
 
-    color_norm = mpl.colors.LogNorm() if cscale == "log" else None
+    color_norm = mcolors.LogNorm() if cscale == "log" else None
     vmin, vmax = clim
     im = ax.pcolormesh(xedges, yedges, z, shading=shading, vmin=vmin, vmax=vmax, norm=color_norm, cmap=cmap)
 
@@ -538,7 +539,7 @@ def get_histogram2d(x=None, y=None, z=None,
 
     ax.set_title(title)
 
-    if ax1 is None:
+    if ax is None:
         save_histogram(fig, fname)
     else:
         return ax, im

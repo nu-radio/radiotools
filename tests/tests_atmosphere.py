@@ -1,5 +1,4 @@
 from __future__ import print_function
-from past.builtins import xrange
 
 from radiotools.atmosphere import models as atmos
 
@@ -41,13 +40,13 @@ class AtmosphereTests(unittest.TestCase):
         heights = np.linspace(0, 1e4, 10)
         atm1 = atm.get_atmosphere(zeniths, heights)
         atm2 = atm.get_atmosphere(np.zeros(10), heights) / np.cos(zeniths)
-        for i in xrange(len(atm1)):
+        for i in range(len(atm1)):
             self.assertAlmostEqual(atm1[i], atm2[i])
 
         heights2 = np.linspace(1e4, 1e5, 10)
         atm1 = atm.get_atmosphere(zeniths, heights, heights2)
         atm2 = atm.get_atmosphere(np.zeros(10), heights, heights2) / np.cos(zeniths)
-        for i in xrange(len(atm1)):
+        for i in range(len(atm1)):
             self.assertAlmostEqual(atm1[i], atm2[i])
 
         z = np.deg2rad(50)
@@ -65,19 +64,19 @@ class AtmosphereTests(unittest.TestCase):
         zeniths = np.deg2rad(np.linspace(0, 20, 3))
         atm1 = atm_flat.get_atmosphere(zeniths, 0)
         atm2 = atm_num.get_atmosphere(zeniths, 0)
-        for i in xrange(len(atm1)):
+        for i in range(len(atm1)):
             delta = 1e-3 + np.rad2deg(zeniths[i]) * 1e-2
             self.assertAlmostEqual(atm1[i], atm2[i], delta=delta)
 
         atm1 = atm_flat.get_atmosphere(zeniths, 1e3)
         atm2 = atm_num.get_atmosphere(zeniths, 1e3)
-        for i in xrange(len(atm1)):
+        for i in range(len(atm1)):
             delta = 1e-3 + np.rad2deg(zeniths[i]) * 1e-2
             self.assertAlmostEqual(atm1[i], atm2[i], delta=delta)
 
         atm1 = atm_flat.get_atmosphere(zeniths, 1e3, 1e4)
         atm2 = atm_num.get_atmosphere(zeniths, 1e3, 1e4)
-        for i in xrange(len(atm1)):
+        for i in range(len(atm1)):
             delta = 1e-3 + np.rad2deg(zeniths[i]) * 1e-2
             self.assertAlmostEqual(atm1[i], atm2[i], delta=delta)
 
@@ -100,7 +99,7 @@ class AtmosphereTests(unittest.TestCase):
             self.assertAlmostEqual(atm1, atm2, delta=1e-3)
 
         zeniths = np.deg2rad([0, 11.478341, 30.683417])
-        for i in xrange(len(zeniths)):
+        for i in range(len(zeniths)):
             delta = 1e-6
             atm1 = atm_taylor.get_atmosphere(zeniths[i], 0)
             atm2 = atm_num.get_atmosphere(zeniths[i], 0)
@@ -108,13 +107,13 @@ class AtmosphereTests(unittest.TestCase):
 
         atm1 = atm_taylor.get_atmosphere(zeniths, 1e3)
         atm2 = atm_num.get_atmosphere(zeniths, 1e3)
-        for i in xrange(len(atm1)):
+        for i in range(len(atm1)):
             delta = 1e-5
             self.assertAlmostEqual(atm1[i], atm2[i], delta=delta)
 
         atm1 = atm_taylor.get_atmosphere(zeniths, 1e3, 1e4)
         atm2 = atm_num.get_atmosphere(zeniths, 1e3, 1e4)
-        for i in xrange(len(atm1)):
+        for i in range(len(atm1)):
             delta = 1e-5
             self.assertAlmostEqual(atm1[i], atm2[i], delta=delta)
 
@@ -132,7 +131,7 @@ class AtmosphereTests(unittest.TestCase):
         atm_num = atmos.Atmosphere(curved=True, zenith_numeric=0)
 
         zeniths = np.deg2rad(np.linspace(0, 83, 20))
-        for i in xrange(len(zeniths)):
+        for i in range(len(zeniths)):
             delta = 1e-3
             # print "checking z = %.1f" % np.rad2deg(zeniths[i])
             atm1 = atm_taylor.get_atmosphere(zeniths[i], 0)
@@ -141,7 +140,7 @@ class AtmosphereTests(unittest.TestCase):
             self.assertAlmostEqual(atm1, atm2, delta=delta)
 
         zeniths = np.deg2rad(np.linspace(0, 83, 20))
-        for i in xrange(len(zeniths)):
+        for i in range(len(zeniths)):
             delta = 1e-2
             # print "checking z = %.1f" % np.rad2deg(zeniths[i])
             atm1 = atm_taylor.get_atmosphere(zeniths[i], 1e3)
@@ -149,7 +148,7 @@ class AtmosphereTests(unittest.TestCase):
             self.assertAlmostEqual(atm1, atm2, delta=delta)
 
         zeniths = np.deg2rad(np.linspace(0, 83, 20))
-        for i in xrange(len(zeniths)):
+        for i in range(len(zeniths)):
             delta = 1e-2
             # print "checking z = %.1f" % np.rad2deg(zeniths[i])
             atm1 = atm_taylor.get_atmosphere(zeniths[i], 0, 1e4)
@@ -163,14 +162,14 @@ class AtmosphereTests(unittest.TestCase):
         xmax = np.linspace(300, 900, 20)
         atm1 = atm_flat.get_vertical_height(zenith * np.ones_like(xmax), xmax)
         atm2 = atm_num.get_vertical_height(zenith * np.ones_like(xmax), xmax)
-        for i in xrange(len(xmax)):
+        for i in range(len(xmax)):
             self.assertAlmostEqual(atm1[i], atm2[i], delta=1e-2)
 
         zeniths = np.deg2rad(np.linspace(0, 30, 4))
         xmax = 600
         atm1 = atm_flat.get_vertical_height(zeniths, xmax)
         atm2 = atm_num.get_vertical_height(zeniths, xmax)
-        for i in xrange(len(zeniths)):
+        for i in range(len(zeniths)):
             self.assertAlmostEqual(atm1[i], atm2[i], delta=1e-3 * atm1[i])
 
     def test_vertical_height_taylor_numeric(self):
@@ -183,7 +182,7 @@ class AtmosphereTests(unittest.TestCase):
         atm1 = atm_taylor.get_vertical_height(zeniths, xmax)
         atm2 = atm_num.get_vertical_height(zeniths, xmax)
 
-        for i in xrange(len(zeniths)):
+        for i in range(len(zeniths)):
             self.assertAlmostEqual(atm1[i], atm2[i], delta=2e-5 * atm1[i])
 
 #

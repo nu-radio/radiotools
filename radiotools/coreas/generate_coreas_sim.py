@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function  # , unicode_literals
 import os
 import stat
 import numpy as np
@@ -43,7 +42,8 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
              particles=True,
              parallel=False, parallel_cut=1e-2,
              B=[19.71, -14.18], thinning=1e-6, ecuts=[1.000E-01, 5.000E-02, 2.500E-04, 2.500E-04],
-             stepfc=1):
+             stepfc=1,
+             hdf5_converter_arguments=""):
     scratchdir = '$TMPDIR/glaser/%i/%i/' % (int(event_number), int(particle_type))
     fout = open(filename, 'w')
     if pre_executionscript is not None:
@@ -62,7 +62,7 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
     fout.write('rm -rf {0}$RUNNR\n'.format(scratchdir))
     fout.write('mkdir -p {0}$RUNNR\n'.format(scratchdir))
     executable = os.path.join(radiotools_path, "radiotools", "coreas", "geninp_aera.py")
-    fout.write('{17} -r $RUNNR -s {0} -u {1} -a {2} -z {3} -t {4} -d {5}$RUNNR/ --atm {6} --conex {7} --obslevel {8} --parallel {9} --Bx {10} --Bz {11} --thinning {12} --ecuts {13} {14} {15} {16} --pcut {18} --particles {19} --stepfc {20} > {5}$RUNNR/RUN$RUNNR.inp\n'.format(seed, energy * 1e-9, 180. * azimuth / np.pi, 180 * zenith / np.pi, particle_type, scratchdir, atm, int(conex), obs_level, int(parallel), B[0], B[1], thinning, ecuts[0], ecuts[1], ecuts[2], ecuts[3], executable, parallel_cut, int(particles), stepfc))
+    fout.write('python {17} -r $RUNNR -s {0} -u {1} -a {2} -z {3} -t {4} -d {5}$RUNNR/ --atm {6} --conex {7} --obslevel {8} --parallel {9} --Bx {10} --Bz {11} --thinning {12} --ecuts {13} {14} {15} {16} --pcut {18} --particles {19} --stepfc {20} > {5}$RUNNR/RUN$RUNNR.inp\n'.format(seed, energy * 1e-9, 180. * azimuth / np.pi, 180 * zenith / np.pi, particle_type, scratchdir, atm, int(conex), obs_level, int(parallel), B[0], B[1], thinning, ecuts[0], ecuts[1], ecuts[2], ecuts[3], executable, parallel_cut, int(particles), stepfc))
     fout.write('cp ' + run_dir + '/SIM$RUNNR.reas {1}$RUNNR/SIM$RUNNR.reas\n'.format(event_number, scratchdir))
     fout.write('cp ' + run_dir + '/SIM$RUNNR.list {1}$RUNNR/SIM$RUNNR.list\n'.format(event_number, scratchdir))
     if (int(particle_type) == 14):
@@ -100,7 +100,7 @@ def write_sh(filename, output_dir, run_dir, corsika_executable,
     if (int(particle_type) == 5626):
         particle_identifier = "Fe"
 #     fout.write('\tpython {0} -s -d $RUNNR -o {1} --particle-type {2}\n'.format(executable, os.path.join(output_dir, "../pickle"), particle_identifier))
-    fout.write('\tpython {} $RUNNR/SIM$RUNNR.reas -o {outputdir} \n'.format(hdf5converter, outputdir=os.path.join(output_dir, "../hdf5")))
+    fout.write('\tpython {} $RUNNR/SIM$RUNNR.reas -o {outputdir} {arguments} \n'.format(hdf5converter, outputdir=os.path.join(output_dir, "../hdf5"), arguments=hdf5_converter_arguments))
     if(parallel):
         # merge particle outputs in case of MPI simulation
         executable = os.path.join(os.path.dirname(corsika_executable), "..", "coast/CorsikaFileIO", "merge_corsika")
@@ -581,6 +581,7 @@ def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_mo
 #                     slices = np.array(slices)
 #                     if(slicing_method == "distance"):
 #                         slices *= 100
+#                     for iSlice in range(len(slices) - 1):
 #                     for iSlice in range(len(slices) - 1):
 #                         fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
 #     fout.close()

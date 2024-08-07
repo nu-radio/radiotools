@@ -3,7 +3,7 @@
 
 import numpy as np
 import math
-from numpy.linalg import linalg
+import numpy.linalg as linalg
 import copy
 import sys
 

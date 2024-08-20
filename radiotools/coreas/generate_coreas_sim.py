@@ -508,7 +508,7 @@ def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_mo
     # calculate cherenkov radius from zenith angle, depth of maximum, observation level, and atmosphere model
     # uses 750 g/cm² as an approximation
     # THIS IS ONLY (APPROX.) VALID FOR PROTONS AT ENERGIES: 10e16 - 10e19 eV
-    cherenkov_radius = get_cherenkov_radius_model_from_depth(zenith=zenith, depth=750, obs_level=obs_level, n0=n0, model=atm_model) # returns in m
+    cherenkov_radius = get_cherenkov_radius_from_depth(zenith=zenith, depth=750, obs_level=obs_level, n0=n0, model=atm_model) # returns in m
 
     r_cherenkov_upper_limit = (cherenkov_radius * 1.23 + 80)
 

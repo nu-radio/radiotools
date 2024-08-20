@@ -8,7 +8,7 @@ import warnings
 from radiotools.atmosphere import models as atm
 
 
-def get_cherenkov_radius_model_from_depth(zenith, depth, obs_level, n0, model=None, at=None):
+def get_cherenkov_radius_from_depth(zenith, depth, obs_level, n0, model=None, at=None):
     """ Calculates the radius of the (Cherenkov) cone with an apex at a given depth along a 
         shower axis with a given zenith angle. The open angle of the cone equals the 
         Cherenkov angle for a value of the refractive index at this position.
@@ -40,10 +40,10 @@ def get_cherenkov_radius_model_from_depth(zenith, depth, obs_level, n0, model=No
         at = atm.Atmosphere(model=model)
 
     d = at.get_distance_xmax_geometric(zenith, depth, obs_level)
-    return get_cherenkov_radius_model_from_distance(zenith, d, obs_level, n0, at.model)
+    return get_cherenkov_radius_from_distance(zenith, d, obs_level, n0, at.model)
 
 
-def get_cherenkov_radius_model_from_height(zenith, height, obs_level, n0, model):
+def get_cherenkov_radius_from_height(zenith, height, obs_level, n0, model):
     """ Calculates the radius of the (Cherenkov) cone with an apex at a given height above sea level on a
         shower axis with a given zenith angle. The open angle of the cone equals the 
         Cherenkov angle for a value of the refractive index at this position.
@@ -69,13 +69,13 @@ def get_cherenkov_radius_model_from_height(zenith, height, obs_level, n0, model)
 
     """
 
-    angle = get_cherenkov_angle_model(height, n0, model)
+    angle = get_cherenkov_angle(height, n0, model)
     dmax = atm.get_distance_for_height_above_ground(
         height - obs_level, zenith, observation_level=obs_level)
     return cherenkov_radius(angle, dmax)
 
 
-def get_cherenkov_radius_model_from_distance(zenith, d, obs_level, n0, model):
+def get_cherenkov_radius_from_distance(zenith, d, obs_level, n0, model):
     """ Calculates the radius of the (Cherenkov) cone with an apex at a given distance from ground 
         along the shower axis with a given zenith angle. The open angle of the cone equals the 
         Cherenkov angle for a value of the refractive index at this position.
@@ -102,11 +102,11 @@ def get_cherenkov_radius_model_from_distance(zenith, d, obs_level, n0, model):
     """
     height = atm.get_height_above_ground(
         d, zenith, observation_level=obs_level) + obs_level
-    angle = get_cherenkov_angle_model(height, n0, model)
+    angle = get_cherenkov_angle(height, n0, model)
     return cherenkov_radius(angle, d)
 
 
-def get_cherenkov_angle_model(height, n0, model):
+def get_cherenkov_angle(height, n0, model):
     """ Return cherenkov angle for given height above sea level, 
         refractive index at sea level and atmospheric model. 
 
@@ -125,10 +125,10 @@ def get_cherenkov_angle_model(height, n0, model):
 
     """
     n = atm.get_n(height, n0=n0, model=model)
-    return cherenkov_angle_model(n)
+    return cherenkov_angle(n)
 
 
-def cherenkov_angle_model(n):
+def cherenkov_angle(n):
     """ Return cherenkov angle for given refractive index.
 
     Paramter:
@@ -162,21 +162,3 @@ def cherenkov_radius(angle, d):
 
     """
     return np.tan(angle) * d
-
-
-# old: cherenkov_angle_from_density_refractivity(rho, dxmax, n_asl, rho_0, ...)
-# param of the cherenkov angle from star-shape simulations
-# here cherenkov radius refers to radius of strongest emission
-# is used to determine rmax in the RdIdealGrid simulations!
-def cherenkov_angle_param(
-        height, dist, n0, model,
-        a=9.48990456e-01, b=4.48698860e+03,
-        c=1.43097665e+00, d=2.46630811e+06):
-
-    n = atm.get_n(height, n0=n0, model=model)
-    A = a - (b / dist) ** (c) - dist / d
-
-    return A * cherenkov_angle_model(n)
-# # old param
-# def cherenkov_angle_from_density(x, A=0.24905864, B=0.92165234):
-#     return np.deg2rad(A * np.log(x) + B)

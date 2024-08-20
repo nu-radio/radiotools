@@ -452,24 +452,6 @@ def write_list_star_pattern(filename, zenith, azimuth,
     return corsika_azimuth
 
 
-def get_rmax(X_obs):
-    """ 
-    WARNING: this is just a very rough approximation in order to generate antenna patterns
-    of the right size for starshape simulations
-
-
-    Parameters:
-
-    X_obs: Grammage at observation level (in g/cm^2)
-
-    Returns: 
-        Returns maximum axis distance in meter for a given simulation as
-        function of the grammage at observation level X_obs in g/cm2 for a given atmosphere and zenith angle
-    """
-    # rough hardcoded parametrisation...
-    return -148 + 0.712 * X_obs
-
-
 def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_model=None):
     """
     function to generate starshape antenna pattern with certain features:
@@ -500,16 +482,15 @@ def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_mo
 
         at = models.Atmosphere(atm_model)
 
-    # calculate maximum distance of antenna from shower core (in shower plane)
-    # uses rough, hardcoded parametrisation
-    maxX = at.get_atmosphere(zenith, obs_level)
-    rmax = get_rmax(maxX)
-
     # calculate cherenkov radius from zenith angle, depth of maximum, observation level, and atmosphere model
     # uses 750 g/cm² as an approximation
     # THIS IS ONLY (APPROX.) VALID FOR PROTONS AT ENERGIES: 10e16 - 10e19 eV
     cherenkov_radius = get_cherenkov_radius_from_depth(zenith=zenith, depth=750, obs_level=obs_level, n0=n0, model=atm_model) # returns in m
 
+    # max radius of antenna rings, good balance for getting most of the emission and not simulating too far out to be useful
+    rmax = cherenkov_radius * 6
+
+    # safe distance where you get most of the cherenkov radii with the dense array
     r_cherenkov_upper_limit = (cherenkov_radius * 1.23 + 80)
 
     # create list of antenna rings with denser rings within cherenkov radius and a little beyond

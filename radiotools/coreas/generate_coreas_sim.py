@@ -6,7 +6,7 @@ from radiotools import helper as hp
 from radiotools.atmosphere import models
 import sys
 
-from radiotools.atmosphere.cherenkov_radius import get_cherenkov_radius_model_from_depth
+from radiotools.atmosphere.cherenkov_radius import get_cherenkov_radius_from_depth
 
 # $_CONDOR_SCRATCH_DIR
 
@@ -178,7 +178,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
                             obs_level=1400.0, 
                             obs_level_corsika=None, 
                             ground_plane=True,
-                            Auger_CS=True,
+                            auger_cs=True,
                             inclination=np.deg2rad(-35.7324),
                             r_min=0., r_max=500.,n_rings=20,
                             arm_orientiations=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
@@ -217,7 +217,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
         True:  for antennas positioned on the ground plane
         False: for antennas positioned in the shower plane, in the air
 
-    Auger_CS : bool (default is True)
+    auger_cs : bool (default is True)
         True -> you are providing input in Auger coordinates
         False -> you are providing input in Corsika coordinates
 
@@ -284,7 +284,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
     # set as 0 degrees for Corsika input
     # Auger coordinates are Corsika coordinates rotated by -90 degrees
     # so: x direction = East, y direction = North
-    if Auger_CS == True:
+    if auger_cs == True:
           rot_angle = np.deg2rad(270)
           # save corsika azimuth angle for output
           corsika_azimuth = np.round(np.rad2deg(azimuth) - 270, decimals=2)
@@ -292,7 +292,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
           print(f"Azimuth: {corsika_azimuth} degrees - in Corsika convention")
 
 
-    elif Auger_CS == False:
+    elif auger_cs == False:
           rot_angle = 0
           # save corsika azimuth angle for output
           corsika_azimuth = np.round(np.rad2deg(azimuth) - 180, decimals=2)

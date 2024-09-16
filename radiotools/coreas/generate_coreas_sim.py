@@ -3,6 +3,10 @@ import stat
 import numpy as np
 from radiotools import coordinatesystems
 from radiotools import helper as hp
+from radiotools.atmosphere import models
+import sys
+
+from radiotools.atmosphere.cherenkov_radius import get_cherenkov_radius_from_depth
 
 # $_CONDOR_SCRATCH_DIR
 
@@ -169,67 +173,237 @@ def write_list(filename, station_positions, station_name=None, append=False):
     fout.close()
 
 
-def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, obs_level_corsika=None,
-                            inc=np.deg2rad(-35.7324), ground_plane=True, r_min=0., r_max=500.,
-                            rs=None,
-                            slicing_method=None, slices=[], n_rings=20,
-                            azimuths=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
-                            gammacut=None):
+def write_list_star_pattern(filename, zenith, azimuth, 
+                            append=False, 
+                            obs_level=1400.0, 
+                            obs_level_corsika=None, 
+                            ground_plane=True,
+                            auger_cs=True,
+                            inclination=np.deg2rad(-35.7324),
+                            r_min=0., r_max=500.,n_rings=20,
+                            arm_orientiations=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
+                            antenna_rings=None,
+                            slicing_method=None, slices=[], 
+                            gammacut=None,
+                            vxB_plot=False
+                            ):
     """
-    if the list file should contain more than one observation level, both the
-    current observation level as well as the CORSIKA observation level needs
-    to be specified as the x, y coordinates are relativ to the core position at
-    the CORSIKA observation level. The coordinates for all observation levels
-    that differ from the CORSIKA observation level need to be shifted along the
-    shower axis accordingly.
+    Parameters
+    ----------
+    filename :  string
+        should have the extension ".list"
+        If the file is supposed to be used with the 
+        radio_mpi Corsika generator (https://github.com/fedbont94/Horeka/tree/radio_mpi),
+        keep the default filename.
+
+    zenith :  float (in radians)
+        zenith angle of the incoming signal/air-shower direction (0 deg is pointing vertically upwards)
+
+    azimuth :  float (in radians)
+        azimuth angle of the incoming signal/air-shower direction (0 deg is North, 90 deg is West)
+
+    obslevel :  float (!!in m!!)
+        Observation level of the detector in the vertical direction
+
+    obs_level_corsika:  float (!!in m!!)
+        if the list file should contain more than one observation level, both the
+        current observation level as well as the CORSIKA observation level needs
+        to be specified as the x, y coordinates are relative to the core position at
+        the CORSIKA observation level. The coordinates for all observation levels
+        that differ from the CORSIKA observation level need to be shifted along the
+        shower axis accordingly.
+
+    ground_plane :  bool     
+        True:  for antennas positioned on the ground plane
+        False: for antennas positioned in the shower plane, in the air
+
+    auger_cs : bool (default is True)
+        True -> you are providing input in Auger coordinates
+        False -> you are providing input in Corsika coordinates
+
+    inclination :  float (in radians)
+        Inclination of the magnetic field.
+        It describes the angle between the Earth's surface and the magnetic field lines.
+        It is used to determine the shower plane coordinate system which is heavily dependent on the orientation of the magnetic field.
+        The default value is given for the Auger site
+
+    r_min, r_max: float (in m)
+        Minimum and maximum radius of antenna rings if no predefined rings are given
+    
+    n_rings:
+        Number of antenna rings if no predefined rings are given
+    
+    arm_orientations : float(in radians)
+        Orientation angles of the arms that make up the antenna rings if no predefined rings are given.
+        Number of angles determines amount of antenna arms.
+        Default are 8 arms of equal radial distance.
+
+    antenna_rings :  array of antenna ring radii (in m!)
+        predefined list of antenna ring radii
+
+    slicing_method, slices: 
+        Parameters for viewing the shower at different points in it development
+
+    gamma_cut:
+
+    vxB_plot: bool
+        True -> Produce additional list file with antenna position in the shower plane system for visual checks
     """
 
+    # errors that catch when input is in wrong unit
+    if obs_level > 10000:
+        sys.exit(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
+    
+    if np.abs(zenith) > 7:
+        sys.exit("Zenith angle likely given in degrees: {zenith}. Must be given in radians!")
+
+    if np.abs(inclination) > 7:
+        sys.exit("Magnetic field inclination angle likely given in degrees: {inclination}. Must be given in radians!")
+
+    # make empty .list file if already existent
     if not append or not os.path.exists(filename):
         fout = open(filename, 'w')
         fout.close()
 
+    # open antenna file for writing
+    fout = open(filename, 'a')
+
     if obs_level_corsika is None:
         obs_level_corsika = obs_level
 
-    # compute translation in x and y
-    r = np.tan(zen) * (obs_level - obs_level_corsika)
-    deltax = np.cos(az) * r
-    deltay = np.sin(az) * r
+    # compute translation in x and y if corsika observation level is specified, otheriwse shift is zero
+    r = np.tan(zenith) * (obs_level - obs_level_corsika)
+    deltax = np.cos(azimuth) * r
+    deltay = np.sin(azimuth) * r
 
-    fout = open(filename, 'a')
-    B = np.array([0, np.cos(inc), -np.sin(inc)])
-    cs = coordinatesystems.cstrafo(zen, az, magnetic_field_vector=B)
-    observation_plane_string = "gp"
+    # print information about input processing
+    print(f"Generating antenna positions at observation level {obs_level} m.")
+    print(f"Zenith: {np.rad2deg(zenith)} degrees - in Corsika convention")
+
+    # define angle for Auger rotation 
+    # set as 0 degrees for Corsika input
+    # Auger coordinates are Corsika coordinates rotated by -90 degrees
+    # so: x direction = East, y direction = North
+    if auger_cs == True:
+          rot_angle = np.deg2rad(270)
+          # save corsika azimuth angle for output
+          corsika_azimuth = np.round(np.rad2deg(azimuth) - 270, decimals=2)
+          # print Corsika input angle for Auger input
+          print(f"Azimuth: {corsika_azimuth} degrees - in Corsika convention")
+
+
+    elif auger_cs == False:
+          rot_angle = 0
+          # save corsika azimuth angle for output
+          corsika_azimuth = np.round(np.rad2deg(azimuth) - 180, decimals=2)
+          # print Corsika input angle
+          print(f"azimuth: {corsika_azimuth} degrees - in Corsika convention")
+
+    else:  # dealing with wrong input choices:
+        sys.exit("Invalid input. Possible options for Auger_CS are 'True' or 'False'. \n Quitting...")
+
+
+    print("These are the angles that should be in the Corsika input file!!!")
+
+    # rotation matrix for transformation between Auger and Corsika coordinate system
+    # rotation matrix for rotation around z-axis
+    # if Auger_CS=False, this is an identity matrix
+    rotation_z_axis = np.array([[np.cos(rot_angle),  (-1) * np.sin(rot_angle), 0], \
+                      [np.sin(rot_angle), np.cos(rot_angle), 0], \
+                      [0, 0, 1]])
+    
+    # inverse rotation matrix for magnetic field vector
+    inverse_rotation = np.linalg.inv(rotation_z_axis)
+ 
+    # compute the B field in Corsika system (x direction = North, y direction = West) from inclination of geomagnetic field given in input
+    B_field = np.array([np.cos(inclination), 0, -np.sin(inclination)])
+    print("Magnetic field vector: ", B_field)
+    print("Magnetic field inclination", np.rad2deg(inclination))
+
+    # rotate magnetic field vector vertical axis in opposite direction of station coordinates
+    # depends on Auger_CS
+    B_field = np.dot(inverse_rotation, B_field)
+
+    # define shower plane coordinate system from given geometry
+    cs = coordinatesystems.cstrafo(zenith, azimuth, magnetic_field_vector=B_field)
+
+    # string for the end of the antenna names
+    observation_plane_string = "gp" # short for groundplane
     if not ground_plane:
+        # instead use shower plane shorthand
         observation_plane_string = "sp"
 
-    if rs is None:
-        rs = np.linspace(r_min, r_max, n_rings + 1)
+    # check whether antenna ring radii are provided by input
+    if antenna_rings is None:
+        antenna_rings = np.linspace(r_min, r_max, n_rings + 1)
+
+    # if provided, add an additional antenna in the middle
     else:
-        n_rings = len(rs)
-        rs = np.append(0, rs)
-    for i in np.arange(1, n_rings + 1):
-        for j in np.arange(len(azimuths)):
-            station_position = rs[i] * hp.spherical_to_cartesian(np.pi * 0.5, azimuths[j])
-            # name = "pos_%i_%i" % (rs[i], np.rad2deg(azimuths[j]))
-            name = "pos_%i_%i_%.0f_%s" % (rs[i], np.rad2deg(azimuths[j]), obs_level, observation_plane_string)
-            if(ground_plane):
+        n_rings = len(antenna_rings)
+        antenna_rings = np.append(0, antenna_rings)
+
+    # array to save all station positions in
+    station_positions_groundsystem = []
+
+    # loop to put define antennas at the specified positions
+    for i in np.arange(1, n_rings + 1): # loop over number of antenna rings
+        for j in np.arange(len(arm_orientiations)): # loop over number of arms
+             # place antennas along arm in shower plane coordinates
+            station_position = antenna_rings[i] * hp.spherical_to_cartesian(np.pi * 0.5, arm_orientiations[j])
+            # set antenna name
+            name = "pos_%i_%i_%.0f_%s" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), obs_level, observation_plane_string)
+
+            # for ground plane antenna array
+            if ground_plane:
+                # transform station positions to ground plane coordinates and set all the z coordinates to 0
                 pos_2d = cs.transform_from_vxB_vxvxB_2D(station_position)  # position if height in observer plane should be zero
+                # add xy shift if applicable
                 pos_2d[0] += deltax
                 pos_2d[1] += deltay
-                x, y, z = 100 * pos_2d[1], -100 * pos_2d[0], 100 * obs_level
+
+                # write transformed coordinates into kartesian vector and 
+                # set z coordinate to observation level
+                # and finally convert to cm (Corsika's favourite unit)
+                antennas = np.array([100 * pos_2d[0], 100 * pos_2d[1], 100 * obs_level])
+
+                # write all station positions into list for plot in vxB coordinates
+                station_positions_groundsystem.append(antennas)
+
+                # apply rotation matrix to stations
+                # Corsika input will stay the same, Auger input will be rotated by -90 degrees
+                antennas = np.dot(rotation_z_axis, antennas)
+
             else:
+                # transform station positions to ground plane coordinates
                 pos = cs.transform_from_vxB_vxvxB(station_position)
+                # add xy shift if applicable
                 pos[0] += deltax
                 pos[1] += deltay
-                x, y, z = 100 * pos[1], -100 * pos[0], 100 * (pos[2] + obs_level)
+
+                # write transformed coordinates into kartesian vector and 
+                # add observation level to z coordinate
+                # and finally convert to cm (Corsika's favourite unit)
+                antennas = np.array([100 * pos[0], 100 * pos[1], 100 * (pos[2] + obs_level)])
+
+                # write all station positions into list for plot in vxB coordinates
+                station_positions_groundsystem.append(antennas)
+
+                # apply rotation matrix to stations
+                # Corsika input will stay the same, Auger input will be rotated by -90 degrees
+                antennas = np.dot(rotation_z_axis, antennas)
+
             if(slicing_method is None):
+                # default: with no slicing or gammacut
                 if gammacut is None:
-                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(x, y, z, name))
+                    # save the generated starshapes to the antenna list file
+                    # positions in cm
+                    fout.write('AntennaPosition = {0} {1} {2} {3}\n'.format(antennas[0], antennas[1], antennas[2], name))
                 else:
                     for iG, gcut in enumerate(gammacut):
-                        name = "pos_%i_%i_gamma%i" % (rs[i], np.rad2deg(azimuths[j]), iG)
-                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(x, y, z, name, gcut[0], gcut[1]))
+                        name = "pos_%i_%i_gamma%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iG)
+                        # save the generated starshapes to the antenna list file
+                        # positions in cm
+                        fout.write('AntennaPosition = {0} {1} {2} {3} gamma {4} {5}\n'.format(antennas[0], antennas[1], antennas[2], name, gcut[0], gcut[1]))
             else:
                 if(len(slices) <= 1):
                     print("ERROR: at least one slice must be specified")
@@ -241,19 +415,99 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
                 if(slicing_method == "distance"):
                     slices *= 100
                 for iSlice in range(len(slices) - 1):
-                    name = "pos_%i_%i_slice%i" % (rs[i], np.rad2deg(azimuths[j]), iSlice)
+                    name = "pos_%i_%i_slice%i" % (antenna_rings[i], np.rad2deg(arm_orientiations[j]), iSlice)
                     if gammacut is None:
-                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
+                        # save the generated starshapes to the antenna list file
+                        # positions in cm
+                        fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(antennas[0], antennas[1], antennas[2], name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
                     else:
                         for iG, gcut in enumerate(gammacut):
                             name_gamma = "%s_gamma%i" % (name, iG)
-                            fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(x, y, z, name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
+                            # save the generated starshapes to the antenna list file
+                            # positions in cm
+                            fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6} gamma {7} {8}\n'.format(antennas[0], antennas[1], antennas[2], name_gamma, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100., gcut[0], gcut[1]))
+    
+    print("Saved antenna positions (in groundplane coordinates) to file: ", filename)
+
     fout.close()
+
+    # in case you want to plot the antennas in the shower plane coordinate system
+    # mainly for visual checking whether the starshape is ok
+    if vxB_plot:
+        # open the shower.list file to save the generated starshapes to
+        with open("shower_plane.list", "w") as file:
+                
+            # transform the station positions to vxB system for plot
+            shower_plane_system = cs.transform_to_vxB_vxvxB(np.array(station_positions_groundsystem))
+         
+            for i in range(len(shower_plane_system)):
+                # save the generated starshapes to the antenna.list file
+                # positions in cm
+                file.write(f"AntennaPosition = {shower_plane_system[i, 0]} {shower_plane_system[i, 1]} {shower_plane_system[i, 2]} {name}\n")
+            
+            print("Saved antenna positions (in vxB_vxvxB coordinates) to file: ", "shower_plane.list")
+
+
+    # return corsika azimuth angle to for automatically generating corsika input files with the right values
+    return corsika_azimuth
+
+
+def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_model=None):
+    """
+    function to generate starshape antenna pattern with certain features:
+
+    Dense core 
+
+    Dense rings up to just outside the cherenkov ring
+
+    Sparse up to multiple times of the cherenkov radius
+    """
+
+    # This is just validated for has shower
+    # is not even sopisticated
+
+    # obs_level has to be given in m
+    # zenith must be given in radians
+
+    # errors that catch when input is in wrong unit
+    if obs_level > 10000:
+            sys.exit(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
+    
+    if zenith > 7:
+            sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
+
+    if at is None:
+        if atm_model is None:
+            sys.exit("No proper arguments for get_starshaped_pattern_radii")
+
+        at = models.Atmosphere(atm_model)
+
+    # calculate cherenkov radius from zenith angle, depth of maximum, observation level, and atmosphere model
+    # uses 750 g/cm² as an approximation
+    # THIS IS ONLY (APPROX.) VALID FOR PROTONS AT ENERGIES: 10e16 - 10e19 eV
+    cherenkov_radius = get_cherenkov_radius_from_depth(zenith=zenith, depth=750, obs_level=obs_level, n0=n0, model=atm_model) # returns in m
+
+    # max radius of antenna rings, good balance for getting most of the emission and not simulating too far out to be useful
+    rmax = cherenkov_radius * 6
+
+    # safe distance where you get most of the cherenkov radii with the dense array
+    r_cherenkov_upper_limit = (cherenkov_radius * 1.23 + 80)
+
+    # create list of antenna rings with denser rings within cherenkov radius and a little beyond
+    antenna_rings = np.append(0.005 * rmax, np.append(
+                   np.linspace(0.01 * rmax, r_cherenkov_upper_limit, 14, endpoint=False),
+                   np.linspace(r_cherenkov_upper_limit, rmax, 15)))
+    
+    # all lengths here are given in m for the input of the starshape generator function
+    # conversion to cm for the corsika output happens in that function!
+
+    return antenna_rings
+
 
 # def write_list_multiple_heights(filename, zen, az, obs_level=[1564., 0.],
 #                                 inc=np.deg2rad(-35.7324), zero_height=True, r_min=0., r_max=500.,
 #                                 slicing_method="", slices=[], n_rings=20,
-#                                 azimuths=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
+#                                 arm_orientiations=np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]),
 #                                 atm_model=1):
 #     """
 #     inc is the inclination of the magnetic field from CoREAS repo (at AERA site)
@@ -282,8 +536,8 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
 #                        np.linspace(rmax * 0.20, rmax, 17)))
 #
 #         for i, r in enumerate(rs):
-#             for j in np.arange(len(azimuths)):
-#                 station_position = rs[i] * hp.SphericalToCartesian(np.pi * 0.5, azimuths[j])
+#             for j in np.arange(len(arm_orientiations)):
+#                 station_position = rs[i] * hp.SphericalToCartesian(np.pi * 0.5, arm_orientiations[j])
 #                 pos = cs.transform_from_vxB_vxvxB(station_position)
 #                 pos_2d = cs.transform_from_vxB_vxvxB_2D(station_position)  # position if height in observer plane should be zero
 #
@@ -292,7 +546,7 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
 #                 pos_2d[0] += deltax
 #                 pos_2d[1] += deltay
 #
-#                 name = "pos_%i_%i_%.0f_%.0f" % (rs[i], np.rad2deg(azimuths[j]), Xst, h)
+#                 name = "pos_%i_%i_%.0f_%.0f" % (rs[i], np.rad2deg(arm_orientiations[j]), Xst, h)
 #                 x, y, z = 100 * pos[1], -100 * pos[0], 100 * (pos[2] + h)
 #                 if(zero_height):
 #                     x, y, z = 100 * pos_2d[1], -100 * pos_2d[0], 100 * h
@@ -308,6 +562,7 @@ def write_list_star_pattern(filename, zen, az, append=False, obs_level=1564.0, o
 #                     slices = np.array(slices)
 #                     if(slicing_method == "distance"):
 #                         slices *= 100
+#                     for iSlice in range(len(slices) - 1):
 #                     for iSlice in range(len(slices) - 1):
 #                         fout.write('AntennaPosition = {0} {1} {2} {3} {4} {5} {6}\n'.format(x, y, z, name, slicing_method, slices[iSlice] * 100., slices[iSlice + 1] * 100.))
 #     fout.close()

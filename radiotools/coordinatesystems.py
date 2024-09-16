@@ -3,7 +3,7 @@
 
 import numpy as np
 import math
-from numpy.linalg import linalg
+import numpy.linalg as linalg
 import copy
 import sys
 
@@ -158,7 +158,7 @@ class cstrafo():
 
         _, nY = positions.shape
         if(nY != 3):
-            sys.exit("Illeal position given")
+            sys.exit("Illegal position given")
         else:
             result = []
             for pos in positions:

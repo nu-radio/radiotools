@@ -134,7 +134,7 @@ atm_models = {  # US standard after Linsley
 
 
 def add_gdas_model(gdas_file, gdas_model_id=99):
-    """ 
+    """
     Parses a GDAS file and adds the parameter a, b, c, h to the atmospheric model dictionary.
 
     Parameter:
@@ -147,8 +147,8 @@ def add_gdas_model(gdas_file, gdas_model_id=99):
         ID to store the GDAS density model in "atm_models"
 
     Returns: int
-       gdas_model_id
-     
+        gdas_model_id
+
     """
     with open(gdas_file, "rb") as f:
         # pipe contents of the file through
@@ -177,7 +177,7 @@ def add_refractive_index_profile(gdas_file):
         Path to the GDAS file
 
     Returns: array
-       refractive index profile (heights, n)
+        Refractive index profile (heights, n)
 
     """
     h, n = np.genfromtxt(gdas_file, unpack=True, skip_header=6)
@@ -247,9 +247,19 @@ def _get_i_at(at, model=default_model):
 
 
 def get_atmosphere(h, model=default_model):
-    """ returns the (vertical) amount of atmosphere above the height h above see level
-    in units of g/cm^2
-    input: height above sea level in meter"""
+    """
+    Returns the (vertical) amount of atmosphere above the height h above see level in units of g/cm^2.
+
+    Parameters
+    ----------
+    h: float or array
+        Height above sea level in meter
+
+    Returns
+    -------
+    atm: float or array
+        Amount of atmosphere above the height h in g/cm^2
+    """
     if hasattr(h, "__len__"):
         return _get_atmosphere(h, model=model) * 1e-4
     else:
@@ -372,8 +382,8 @@ def get_atmosphere_upper_limit(model=default_model):
 
 
 def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False, model=default_model):
-    """ 
-    Returns the refractive index for a given height above sea level according to the 
+    """
+    Returns the refractive index for a given height above sea level according to the
     Galestone-Dale law, i.e., n(h) = 1 + (n(0) - 1) * rho(h) / rho(0).
 
     Parameters:
@@ -381,13 +391,13 @@ def get_n(h, n0=(1 + 2.92e-4), allow_negative_heights=False, model=default_model
 
     h: double
         Height above sea level (not ground level!)
-    
+
     n0: double
         Refractive index at sea level
 
     allow_negative_heights: bool
         If true allows the height/alitutde below sea level
-    
+
     model: int
         ID of the density model
 
@@ -410,7 +420,7 @@ class Atmosphere():
 
     def __init__(self, model=17, n0=(1 + 292e-6), n_taylor=5, curved=True, number_of_zeniths=201, zenith_numeric=np.deg2rad(80), gdas_file=None):
         """
-        Interface for a 5-layer parameteric atmosphere model (density profil) as used in, e.g., CORSIKA/CoREAS. 
+        Interface for a 5-layer parameteric atmosphere model (density profil) as used in, e.g., CORSIKA/CoREAS.
         Allows to determine height, depth, density, distance, ... for any point along an (shower) axis.
         Uses a taylor expansion to extend the analytic discription for curved atmosphere to higher zenith angle (if curved=True).
         Also allows to use GDAS-files to describe the atmospheric density profile and the atmospheric refractive index profile.
@@ -418,14 +428,14 @@ class Atmosphere():
         gdastool implemented in CORISKA [1].
 
         [1]: https://arxiv.org/pdf/2006.02228.pdf
-        
+
 
         Parameters:
         -----------
 
         model: int
             Number of the predifiend atmospheric density profile. Instead you can provide a GDAS file. Default: 17, i.e., US standard after Keilhauer.
-        
+
         n0: double
             Refractive index at sea level. Default: 1 + 292e-6.
 
@@ -442,12 +452,12 @@ class Atmosphere():
             Zenith angle from which on the model relies on numerical calculation rather than the "taylor method". Default: 80 degree.
 
         gdas_file: str
-            Path to a GDAS file from which the parameter for the density profile and a complete refractive index profile are optained. 
+            Path to a GDAS file from which the parameter for the density profile and a complete refractive index profile are optained.
             This refractive index profile relise on more information than just the density.
             Can be used instead of "model", i.e., if set, "model" is ignored. Default: None.
-        
+
         """
-        
+
         self.curved = curved
         self.n_taylor = n_taylor
         self.__zenith_numeric = zenith_numeric
@@ -461,7 +471,7 @@ class Atmosphere():
         else:
             self._is_gdas = True
             self.model = add_gdas_model(gdas_file)
-            self.n0 = None  
+            self.n0 = None
             # array(height, n)
             self.n_h = add_refractive_index_profile(gdas_file)
 
@@ -469,7 +479,7 @@ class Atmosphere():
         self.c = atm_models[model]['c']
         hh = atm_models[model]['h']
         self.h = np.append([0], hh)
-        
+
         if curved:
             folder = os.path.dirname(os.path.abspath(__file__))
             if not self._is_gdas:
@@ -638,8 +648,7 @@ class Atmosphere():
 
 
     def __get_arguments(self, mask, *args):
-        ones = np.ones(np.sum(mask))
-        return [a * ones if np.shape(a) == () else a[mask] for a in args]
+        return [np.full(np.sum(mask), a) if np.shape(a) == () else a[mask] for a in args]
 
 
     def get_atmosphere(self, zenith, h_low=0., h_up=np.inf, observation_level=0):
@@ -675,10 +684,10 @@ class Atmosphere():
 
     def _get_atmosphere(self, zenith, h_low=0., h_up=np.inf, observation_level=0):
         mask_flat, mask_taylor, mask_numeric = self.__get_method_mask(zenith)
-        
-        mask_h2_finite = np.array((h_up * np.ones_like(zenith)) < h_max)
+
+        mask_h2_finite = np.full_like(zenith, h_up) < h_max
         is_mask_h2_finite = np.any(mask_h2_finite)
-        
+
         atmosphere_h1_to_h2 = np.zeros_like(zenith)
         if np.any(mask_numeric):
             atmosphere_h1_to_h2[mask_numeric] = self._get_atmosphere_numeric(
@@ -687,9 +696,9 @@ class Atmosphere():
         if np.any(mask_taylor):
             atmosphere_h1_to_inf = self._get_atmosphere_taylor(
                 *self.__get_arguments(mask_taylor, zenith, h_low), observation_level=observation_level)
-            
+
             atmosphere_h2_to_inf = np.zeros_like(atmosphere_h1_to_inf)
-            if(is_mask_h2_finite):
+            if is_mask_h2_finite:
                 mask_tmp = np.squeeze(mask_h2_finite[mask_taylor])
                 atmosphere_h2_to_inf[mask_tmp] = self._get_atmosphere_taylor(
                     *self.__get_arguments(mask_tmp, zenith, h_up), observation_level=observation_level)
@@ -700,9 +709,9 @@ class Atmosphere():
         if np.any(mask_flat):
             atmosphere_h1_to_inf = self._get_atmosphere_flat(
                 *self.__get_arguments(mask_flat, zenith, h_low))
-            
+
             atmosphere_h2_to_inf = np.zeros_like(atmosphere_h1_to_inf)
-            if(is_mask_h2_finite):
+            if is_mask_h2_finite:
                 mask_tmp = np.squeeze(mask_h2_finite[mask_flat])
                 atmosphere_h2_to_inf = self._get_atmosphere_flat(
                     *self.__get_arguments(mask_tmp, zenith, h_up))
@@ -800,8 +809,8 @@ class Atmosphere():
             d_low = get_distance_for_height_above_ground(t_h_low - o, z, o)
             d_up = get_distance_for_height_above_ground(t_h_up - o, z, o)
 
-            full_atm = integrate.quad(self._get_density_for_distance, d_low, d_up, 
-                                      args=(z, o), epsabs=1.49e-08, epsrel=1.49e-08, limit=500)[0]
+            full_atm = integrate.quad(self._get_density_for_distance, d_low, d_up,
+                args=(z, o), epsabs=1.49e-08, epsrel=1.49e-08, limit=500)[0]
 
             tmp[i] = full_atm
 
@@ -931,13 +940,26 @@ class Atmosphere():
 
 
     def get_distance_xmax_geometric(self, zenith, xmax, observation_level=1564.):
-        """ input:
-            - xmax in g/cm^2
-            - zenith in radians
-            output: distance to xmax in m
+        """
+        Returns the geometric distance (i.e. in meters) between ground and a point along an axis defined by its slant depth
+        (i.e., Xmax).
+
+        Parameters
+        ----------
+        zenith: float
+            Zenith angle of the (shower) axis in radians
+        xmax : float
+            Slant depth of the point in g/cm^2
+        observation_level: float
+            Observation level in m
+
+        Returns
+        -------
+        distance: float
+            Distance to the point in m
         """
         return self._get_distance_xmax_geometric(zenith, xmax * 1e4,
-                                                 observation_level=observation_level)
+            observation_level=observation_level)
 
 
     def _get_distance_xmax_geometric(self, zenith, xmax, observation_level=1564.):
@@ -972,9 +994,9 @@ class Atmosphere():
 
     def get_viewing_angle(self, zenith, r, xmax=600, observation_level=1564.):
         """
-        calculates the viewing angle, i.e. the angle between the shower axis and the line of sight from 
+        Calculates the viewing angle, i.e. the angle between the shower axis and the line of sight from
         the observer to xmax.
-        
+
         Parameters
         ----------
         zenith: float
@@ -993,13 +1015,13 @@ class Atmosphere():
         """
         calculates the radial distance from the observer position (defined by xmax and the viewing angle) to the shower
         axis.
-        
+
         Parameters
         ----------
         zenith: float
             zenith angle
         viewing_angle: float
-            the viewing angle, i.e. the angle between the shower axis and the line of sight from 
+            the viewing angle, i.e. the angle between the shower axis and the line of sight from
             the observer to xmax.
         xmax: float
         observation_level: float
@@ -1009,7 +1031,7 @@ class Atmosphere():
 
 
     def _get_integrated_refractivity(self, zenith, distance, observation_level=0):
-        """ 
+        """
         Integrate the refractivity (N = n - 1) from ground along a given path (defined with zenith angel and distance).
         Returns the integrated refractivity and grammage.
         """
@@ -1021,10 +1043,9 @@ class Atmosphere():
 
 
     def get_effective_refractivity(self, z, distance, observation_level):
-        """ 
+        """
         Returns the "effective" refractivity N_int / d. With N_int being the refractivity integrated over the distance d.
         Returns the effective refractivity and grammage.
         """
         r, at = self._get_integrated_refractivity(z, distance, observation_level)
         return r / distance, at
-

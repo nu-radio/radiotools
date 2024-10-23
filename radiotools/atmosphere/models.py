@@ -968,14 +968,6 @@ class Atmosphere():
         h_xmax = get_height_above_ground(distance, zenith, observation_level) + observation_level
         return self.get_atmosphere(zenith, h_low=observation_level, observation_level=observation_level) - \
             self.get_atmosphere(zenith, h_low=observation_level, h_up=h_xmax, observation_level=observation_level)
-        """ input:
-            - distance to xmax in m
-            - zenith in radians
-            output: xmax g/cm^2
-        """
-        h_xmax = get_height_above_ground(distance, zenith, observation_level) + observation_level
-        return self.get_atmosphere(zenith, h_low=observation_level) - \
-               self.get_atmosphere(zenith, h_low=observation_level, h_up=h_xmax)
 
 
     def get_viewing_angle(self, zenith, r, xmax=600, observation_level=1564.):

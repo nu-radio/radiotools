@@ -643,7 +643,33 @@ class Atmosphere():
 
 
     def get_atmosphere(self, zenith, h_low=0., h_up=np.inf, observation_level=0):
-        """ returns the atmosphere for an air shower with given zenith angle (in g/cm^2) """
+        """
+        Returns the atmosphere between the altitude `h_low` and `h_up` along a line (shower axis)
+        with a given zenith angle.
+
+        NOTE: It is important to note that the atmosphere is always integrated between `h_low` and `h_up`.
+        Even if the `obsrvation_level` is non zero! The observation level is only used to interprete
+        the zenith angle at this height in a curved atmosphere. In a flat atmosphere the observation level has
+        no effect on the result what so ever.
+
+        Parameters
+        ----------
+        zenith: float or array
+            Zenith angle in radians.
+        h_low: float or array (Default: 0.)
+            Lower bound to integrate over the atmosphere in meter. Relative to sea level.
+        h_up: float or array (Default: np.inf)
+            Upper bound to integrate over the atmosphere in meter. Relative to sea level.
+        observation_level: float or array (Default: 0)
+            Height of the observation level above sea level in meter. The zenith angle is interpreted at this height.
+            However, the atmosphere is integrated from `h_low` to `h_up`.
+
+        Returns
+        -------
+        atm: float or array
+            Amount of atmosphere between `h_low` and `h_up` in g/cm^2.
+
+        """
         return self._get_atmosphere(zenith, h_low=h_low, h_up=h_up, observation_level=observation_level) * 1e-4
 
 

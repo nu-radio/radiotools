@@ -23,6 +23,12 @@ class AtmosphereTests(unittest.TestCase):
         self.assertFalse(np.allclose(dxmax_1564, dxmax_3000, rtol=0.1, atol=100))
 
 
+    def test_distance_xmax_round_trip(self):
+        atm = atmos.Atmosphere()
+        zeniths = np.deg2rad(np.linspace(0, 85, 30))
+        dX = np.array([750 - atm.get_xmax_from_distance(atm.get_distance_xmax_geometric(z, 750, 1400), z, 1400) for z in zeniths])
+        self.assertFalse(np.allclose(dX, np.zeros_like(dX)))
+
     def test_height_above_ground_to_distance_transformation(self):
         zeniths = np.deg2rad(np.linspace(0, 90, 10))
         for zenith in zeniths:

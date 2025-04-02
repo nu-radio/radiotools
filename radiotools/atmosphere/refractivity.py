@@ -5,6 +5,10 @@ import numpy as np
 import sys
 import os
 
+import logging
+
+logger = logging.getLogger('radiotools.atmosphere.refractivity')
+
 
 """
 For the integrated refractivity from the table as function of the zenith angle and distance (curved is True) a minor,
@@ -35,7 +39,7 @@ def n_param_ZHAireS(h):
     return 1 + a * np.exp(-b * h)
 
 
-def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refractivity_at_sea_level=None, table=None, debug=False):
+def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refractivity_at_sea_level=None, table=None):
     """
     Numerical calculation of the integrated refractivity between two positions along a straight line in the atmosphere.
     Takes curvature of a spherical earth into account.
@@ -57,8 +61,6 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refrac
         via Gladstone-Dale relation. Not necessary/used if a RefractivityTable is given.
     table : RefractivityTable
         If given, used to determine N(h). Instead of using Gladstone-Dale relation. (default: None)
-    debug : bool
-        If True, prints out debug output (default: False).
 
     Returns
     -------
@@ -88,10 +90,9 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refrac
         else:
             refractivity += table.get_refractivity_for_height_tabulated(height_asl) * dstep
 
-    if debug:
-        height_max = atm.get_height_above_ground(max_dist, zenith, observation_level=obs_level) + obs_level
-        print("calculate num for %.3f deg, %.1f m distance, %.1f m min height, %.1f m max height: N = %.3e" %
-             (np.rad2deg(zenith), max_dist, obs_level, height_max, refractivity / max_dist))
+    height_max = atm.get_height_above_ground(max_dist, zenith, observation_level=obs_level) + obs_level
+    logger.debug("calculate num for %.3f deg, %.1f m distance, %.1f m min height, %.1f m max height: N = %.3e" %
+            (np.rad2deg(zenith), max_dist, obs_level, height_max, refractivity / max_dist))
 
     return refractivity / max_dist
 
@@ -189,7 +190,7 @@ class RefractivityTable(object):
 
 
     def read_table_from_file(self, fname):
-        print("Read in {} ...".format(fname))
+        logger.info("Read in {} ...".format(fname))
         data = np.load(fname, "r", allow_pickle=True)
         self._refractivity_integrated_table = data["refractivity_integrated_table"]
         self._distance_increment = data["distance_increment"]
@@ -217,7 +218,7 @@ class RefractivityTable(object):
             self.read_table_from_file(fname)
 
         else:
-            print("Write {} ...".format(fname))
+            logger.info("Write {} ...".format(fname))
 
             # anchors for table binned in tan.
             self._zeniths = np.arctan(np.linspace(np.tan(self._min_zenith),
@@ -403,14 +404,14 @@ class RefractivityTable(object):
                 zenith_local, obs_level_local)
             d2 = dist + distance_to_earth
         except SystemExit:
-            print("Catch SystemExit while calculating zenith at earth, resuming with numerical calculation")
+            logger.warning("Catch SystemExit while calculating zenith at earth, resuming with numerical calculation")
             return self.get_refractivity_between_two_points_numerical(p1, p2)
 
         if zenith_at_sea_level < np.amin(self._zeniths):
             return self.get_refractivity_between_two_altitudes(obs_level_local, helper.get_local_altitude(p1))
 
         if zenith_at_sea_level > np.amax(self._zeniths):
-            print("Zenith out of range, perform numerical calculation")
+            logger.warning("Zenith out of range, perform numerical calculation")
             return self.get_refractivity_between_two_points_numerical(p1, p2)
 
         return self.get_refractivity_between_two_points_from_distance(zenith_at_sea_level, distance_to_earth, d2)
@@ -439,12 +440,12 @@ if __name__ == "__main__":
     core = np.array([0, 0, 1400])
 
     positions = np.array([np.linspace(-1000, 1000, 20), np.zeros(20), np.zeros(20)]).T + core
-    print(positions)
-    print(positions.shape)
+    logger.debug(positions)
+    logger.debug(positions.shape)
 
 
     for zenith in zeniths:
-        print('zenith', np.rad2deg(zenith))
+        logger.debug('zenith', np.rad2deg(zenith))
         shower_axis = helper.spherical_to_cartesian(zenith, 0)
 
         for depth in depths:
@@ -455,7 +456,7 @@ if __name__ == "__main__":
             # sea level
             point_on_axis = shower_axis * dist + core
             point_on_axis_height = atm.get_height_above_ground(dist, zenith, observation_level=core[-1]) + core[-1]
-            print("Height of point in inital sys:", point_on_axis_height)
+            logger.info("Height of point in inital sys:", point_on_axis_height)
 
             for pos in positions:
                 r_num = tab.get_refractivity_between_two_points_numerical(point_on_axis, pos, debug=False)

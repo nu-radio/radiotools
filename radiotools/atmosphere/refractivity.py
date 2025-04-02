@@ -417,9 +417,9 @@ class RefractivityTable(object):
         return self.get_refractivity_between_two_points_from_distance(zenith_at_sea_level, distance_to_earth, d2)
 
 
-    def get_refractivity_between_two_points_numerical(self, p1, p2, debug=False):
+    def get_refractivity_between_two_points_numerical(self, p1, p2):
         """ Get numerical calculated integrated refractivity between two positions in atmosphere """
-        return get_refractivity_between_two_points_numerical(p1, p2, table=self, debug=debug)
+        return get_refractivity_between_two_points_numerical(p1, p2, table=self)
 
 
 if __name__ == "__main__":
@@ -459,7 +459,7 @@ if __name__ == "__main__":
             logger.info("Height of point in inital sys:", point_on_axis_height)
 
             for pos in positions:
-                r_num = tab.get_refractivity_between_two_points_numerical(point_on_axis, pos, debug=False)
+                r_num = tab.get_refractivity_between_two_points_numerical(point_on_axis, pos)
                 r_tab = tab.get_refractivity_between_two_points_tabulated(point_on_axis, pos)
                 r_tab_flat = tab_flat.get_refractivity_between_two_altitudes(
                     helper.get_local_altitude(pos), helper.get_local_altitude(point_on_axis))

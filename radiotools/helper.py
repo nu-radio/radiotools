@@ -568,8 +568,8 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
     if sigma:
         from scipy.stats import chi2, norm
         # p = norm.cdf(i) - norm.cdf(-i)
-        logger.debug("p = ", nom, denom, nom / denom, "sigma =", chi2.ppf(nom / denom, 1))
-        logger.debug("p = ", p)
+        logger.debug("p = %s %s %s sigma = %s" % (nom, denom, nom / denom,  chi2.ppf(nom / denom, 1)))
+        logger.debug("p = %s", p)
         logger.debug(norm.ppf(nom / denom))
         return chi2.ppf(nom / denom, 1)
     else:

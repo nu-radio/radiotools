@@ -468,7 +468,7 @@ class Atmosphere():
         self.number_of_zeniths = number_of_zeniths
 
         if gdas_file is None:
-            logger.info("model is ", model)
+            logger.info("model is %s", model)
             self.model = model
             self.n0 = n0
             self._is_gdas = False
@@ -493,9 +493,9 @@ class Atmosphere():
                 filename = os.path.join(
                     folder, "constants_%s_%i.npz" % (checksum, n_taylor))
 
-            logger.info("searching constants at ", filename)
+            logger.info("searching constants at %s", filename)
             if os.path.exists(filename):
-                logger.debug("reading constants from ", filename)
+                logger.debug("reading constants from %s", filename)
 
                 with np.load(filename, "rb") as fin:
                     self.a = fin["a"]
@@ -552,7 +552,8 @@ class Atmosphere():
         for iZ, z in enumerate(zeniths):
             logger.info("calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor))
             a[iZ] = self.__get_a(z)
-            logger.debug("\t... a  = ", a[iZ], " iZ = ", iZ)
+            logger.debug("\t... a  = %s", a[iZ]) 
+            logger.debug(" iZ = %s", iZ)
 
         return a
 

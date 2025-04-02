@@ -445,7 +445,7 @@ if __name__ == "__main__":
 
 
     for zenith in zeniths:
-        logger.debug('zenith', np.rad2deg(zenith))
+        logger.debug('zenith = %s', np.rad2deg(zenith))
         shower_axis = helper.spherical_to_cartesian(zenith, 0)
 
         for depth in depths:
@@ -456,7 +456,7 @@ if __name__ == "__main__":
             # sea level
             point_on_axis = shower_axis * dist + core
             point_on_axis_height = atm.get_height_above_ground(dist, zenith, observation_level=core[-1]) + core[-1]
-            logger.info("Height of point in inital sys:", point_on_axis_height)
+            logger.info("Height of point in inital sys: %s", point_on_axis_height)
 
             for pos in positions:
                 r_num = tab.get_refractivity_between_two_points_numerical(point_on_axis, pos)

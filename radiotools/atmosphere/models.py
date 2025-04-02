@@ -6,6 +6,10 @@ import hashlib
 
 from radiotools import helper
 
+import logging
+
+logger = logging.getLogger('radiotools.atmosphere.models')
+
 default_curved = True
 default_model = 17
 
@@ -464,7 +468,7 @@ class Atmosphere():
         self.number_of_zeniths = number_of_zeniths
 
         if gdas_file is None:
-            print("model is ", model)
+            logger.info("model is ", model)
             self.model = model
             self.n0 = n0
             self._is_gdas = False
@@ -489,16 +493,16 @@ class Atmosphere():
                 filename = os.path.join(
                     folder, "constants_%s_%i.npz" % (checksum, n_taylor))
 
-            print("searching constants at ", filename)
+            logger.info("searching constants at ", filename)
             if os.path.exists(filename):
-                print("reading constants from ", filename)
+                logger.debug("reading constants from ", filename)
 
                 with np.load(filename, "rb") as fin:
                     self.a = fin["a"]
 
                 if(len(self.a) != self.number_of_zeniths):
                     os.remove(filename)
-                    print("constants outdated, please rerun to calculate new constants")
+                    logger.warning("constants outdated, please rerun to calculate new constants")
                     sys.exit(0)
 
                 zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
@@ -508,7 +512,7 @@ class Atmosphere():
             else:
                 self.a = self.__calculate_a()
                 np.savez(filename, a=self.a)
-                print("all constants calculated, exiting now... please rerun your analysis")
+                logger.warning("all constants calculated, exiting now... please rerun your analysis")
                 sys.exit(0)
 
 
@@ -546,9 +550,9 @@ class Atmosphere():
         self.curved = True
         self.__zenith_numeric = 0
         for iZ, z in enumerate(zeniths):
-            print("calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor))
+            logger.info("calculating constants for %.02f deg zenith angle (iZ = %i, nT = %i)..." % (np.rad2deg(z), iZ, self.n_taylor))
             a[iZ] = self.__get_a(z)
-            print("\t... a  = ", a[iZ], " iZ = ", iZ)
+            logger.debug("\t... a  = ", a[iZ], " iZ = ", iZ)
 
         return a
 
@@ -607,7 +611,7 @@ class Atmosphere():
                 tmp2 = -1. / 16. * st ** 2 * (ct ** 4 - 14 * ct ** 2 + 21) * (h / r_e) ** 5 / ct ** 11
                 dldh += tmp2
         else:
-            print("ERROR, height index our of bounds")
+            logger.error("height index our of bounds")
             sys.exit(-1)
 
         return dldh
@@ -800,7 +804,7 @@ class Atmosphere():
                 o = observation_level
 
             if t_h_up <= t_h_low:
-                print("WARNING _get_atmosphere_numeric(): upper limit less than lower limit")
+                logger.warning("_get_atmosphere_numeric(): upper limit less than lower limit")
                 return np.nan
 
             if t_h_up == np.inf:
@@ -834,7 +838,7 @@ class Atmosphere():
         tmp = np.zeros_like(zenith)
 
         if np.sum(mask_numeric):
-            # print("get vertical height numeric", zenith)
+            # logger.info("get vertical height numeric", zenith)
             tmp[mask_numeric] = self._get_vertical_height_numeric(
                 *self.__get_arguments(mask_numeric, zenith, X), observation_level=observation_level)
 
@@ -843,7 +847,7 @@ class Atmosphere():
                 *self.__get_arguments(mask_taylor, zenith, X), observation_level=observation_level)
 
         if np.sum(mask_flat):
-            # print("get vertical height flat")
+            # logger.info("get vertical height flat")
             tmp[mask_flat] = self._get_vertical_height_flat(*self.__get_arguments(mask_flat, zenith, X))
 
         return tmp

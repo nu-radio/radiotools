@@ -333,7 +333,7 @@ def get_magnetic_field_vector(site=None):
                        }  
     if site is None:
         site = 'auger'
-    return magnetic_fields[site]
+    return magnetic_fields[site.lower()]
 
 
 def get_angle_to_magnetic_field_vector(zenith, azimuth, site=None):

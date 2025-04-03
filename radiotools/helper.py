@@ -5,6 +5,10 @@ import numpy as np
 import sys
 from scipy.signal import correlate
 
+import logging
+
+logger = logging.getLogger('radiotools.helper')
+
 
 def linear_to_dB(linear):
     """ conversion to decibel scale
@@ -436,7 +440,7 @@ def get_interval_hilbert(trace, scale=0.5):
     elif (d == 2):
         h = np.sqrt(np.sum(np.abs(hilbert(trace)) ** 2, axis=0))
     else:
-        print("ERROR, trace has not the correct dimension")
+        logger.error("trace has not the correct dimension")
         raise
     return get_interval(h, scale)
 
@@ -486,7 +490,7 @@ def get_angle_to_efieldexpectation_in_showerplane(efield, core, zenith, azimuth,
         difference is evaluated in the showerfront, components not perpendicular to
         the shower axis are thus neglected. """
     if (efield.shape != stationPositions.shape):
-        print("ERROR: shape of efield and station positions is not the same.")
+        logger.error("shape of efield and station positions is not the same.")
         raise
     from CSTransformation import CSTransformation
 
@@ -564,9 +568,9 @@ def get_2d_probability(x, y, xx, yy, xx_error, yy_error, xy_correlation, sigma=F
     if sigma:
         from scipy.stats import chi2, norm
         # p = norm.cdf(i) - norm.cdf(-i)
-        print("p = ", nom, denom, nom / denom, "sigma =", chi2.ppf(nom / denom, 1))
-        print("p = ", p)
-        print(norm.ppf(nom / denom))
+        logger.debug("p = %s %s %s sigma = %s" % (nom, denom, nom / denom,  chi2.ppf(nom / denom, 1)))
+        logger.debug("p = %s", p)
+        logger.debug(norm.ppf(nom / denom))
         return chi2.ppf(nom / denom, 1)
     else:
         return nom / denom

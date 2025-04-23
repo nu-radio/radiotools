@@ -839,7 +839,7 @@ class Atmosphere():
         tmp = np.zeros_like(zenith)
 
         if np.sum(mask_numeric):
-            # logger.info("get vertical height numeric", zenith)
+            logger.debug("get vertical height numeric {0}".format(zenith))
             tmp[mask_numeric] = self._get_vertical_height_numeric(
                 *self.__get_arguments(mask_numeric, zenith, X), observation_level=observation_level)
 
@@ -848,7 +848,7 @@ class Atmosphere():
                 *self.__get_arguments(mask_taylor, zenith, X), observation_level=observation_level)
 
         if np.sum(mask_flat):
-            # logger.info("get vertical height flat")
+            logger.debug("get vertical height flat")
             tmp[mask_flat] = self._get_vertical_height_flat(*self.__get_arguments(mask_flat, zenith, X))
 
         return tmp

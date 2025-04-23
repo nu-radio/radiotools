@@ -39,7 +39,7 @@ def n_param_ZHAireS(h):
     return 1 + a * np.exp(-b * h)
 
 
-def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refractivity_at_sea_level=None, table=None):
+def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refractivity_at_sea_level=None, table=None, debug=None):
     """
     Numerical calculation of the integrated refractivity between two positions along a straight line in the atmosphere.
     Takes curvature of a spherical earth into account.
@@ -68,6 +68,13 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refrac
     integrated_refractivity : float
         Refractive index integrated along a straight line between two given points
     """
+    if debug is not None:
+        logger.warning(
+            "The debug parameter of get_refractivity_between_two_points_numerical has been deprecated. "
+            "Please use the logger functionality instead. "
+            "For your convenience, I will now set the logging level of radiotools to DEBUG."
+        )
+        logger.setLevel(logging.DEBUG)
 
     if table is None and (atm_model is None and refractivity_at_sea_level is None):
         sys.exit("Invalid arguments. You have to specify table or atm_model and refractivity_at_sea_level.")
@@ -417,9 +424,9 @@ class RefractivityTable(object):
         return self.get_refractivity_between_two_points_from_distance(zenith_at_sea_level, distance_to_earth, d2)
 
 
-    def get_refractivity_between_two_points_numerical(self, p1, p2):
+    def get_refractivity_between_two_points_numerical(self, p1, p2, debug=None):
         """ Get numerical calculated integrated refractivity between two positions in atmosphere """
-        return get_refractivity_between_two_points_numerical(p1, p2, table=self)
+        return get_refractivity_between_two_points_numerical(p1, p2, table=self, debug=debug)
 
 
 if __name__ == "__main__":

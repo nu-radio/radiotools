@@ -515,9 +515,9 @@ class Atmosphere():
     def get_n(self, h):
         if self._is_gdas:
             idx = np.argmin(np.abs(self.n_h[:, 0] - h))
-            if idx == 0:
+            if h < self.n_h[0, 0]:
                 return self.n_h[0, 1]
-            elif idx == len(self.n_h) - 1:
+            elif h > self.n_h[-1, 0]:
                 return self.n_h[-1, 1]
 
             if self.n_h[idx, 0] < h:

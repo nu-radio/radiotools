@@ -517,7 +517,7 @@ class Atmosphere():
             idx = np.argmin(np.abs(self.n_h[:, 0] - h))
             if idx == 0:
                 return self.n_h[0, 1]
-            elif idx == len(self.n_h):
+            elif idx == len(self.n_h) - 1:
                 return self.n_h[-1, 1]
 
             if self.n_h[idx, 0] < h:

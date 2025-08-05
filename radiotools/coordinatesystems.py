@@ -315,7 +315,7 @@ class cstrafo():
 
     def transform_from_onsky_to_vxB_vxvxB(self, positions):
         """
-        Transform a single position or list of positions from on-sky coordinates (eR, eTheta, ePhi)
+        Transform a single trace or list of trace from on-sky coordinates (eR, eTheta, ePhi)
         to the vxB, vxvxB shower plane coordinate system.
         """
         ground = self.transform_from_onsky_to_ground(positions)
@@ -323,7 +323,7 @@ class cstrafo():
 
     def transform_from_vxB_vxvxB_to_onsky(self, positions):
         """
-        Transform a single position or list of positions from vxB, vxvxB shower plane 
+        Transform a single trace or list of trace from vxB, vxvxB shower plane 
         coordinates back to on-sky coordinates (eR, eTheta, ePhi).
         """
         ground = self.transform_from_vxB_vxvxB(positions)

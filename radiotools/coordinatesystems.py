@@ -312,3 +312,19 @@ class cstrafo():
                 theta_1 = -1. * math.pi * 0.5
                 psi_1 = -phi_1 + math.atan2(-R[0, 1], -R[0, 2])
         return psi_1, theta_1, phi_1
+
+    def transform_from_onsky_to_vxB_vxvxB(self, trace):
+        """
+        Transform a single trace or list of trace from on-sky coordinates (eR, eTheta, ePhi)
+        to the vxB, vxvxB shower plane coordinate system.
+        """
+        ground = self.transform_from_onsky_to_ground(positions)
+        return self.transform_to_vxB_vxvxB(ground)
+
+    def transform_from_vxB_vxvxB_to_onsky(self, trace):
+        """
+        Transform a single trace or list of trace from vxB, vxvxB shower plane 
+        coordinates back to on-sky coordinates (eR, eTheta, ePhi).
+        """
+        ground = self.transform_from_vxB_vxvxB(positions)
+        return self.transform_from_ground_to_onsky(ground)

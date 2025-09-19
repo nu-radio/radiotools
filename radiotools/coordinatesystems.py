@@ -21,7 +21,7 @@ class cstrafo():
      * to the on-sky coordinate system (spherical coordinates eR, eTheta, ePhi)
      * to a ground coordinate system where the y-axis is oriented to magnetic North (instead of geographic North)
      * to a shower plane coordinate system in which the z-axis is parallel to the shower axis
-       and the shower axis projected on ground is in the yz-plane 
+       and the shower axis projected on ground is in the yz-plane
 
     and vice versa.
     """
@@ -90,7 +90,7 @@ class cstrafo():
         self.__inverse_transformation_matrix_magnetic = np.linalg.inv(
             self.__transformation_matrix_magnetic)
 
-        # initilize transformation matrix from ground (geographic) cs to ground 
+        # initilize transformation matrix from ground (geographic) cs to ground
         # cs where x axis points into shower direction projected on ground
         c = np.cos(-1 * azimuth)
         s = np.sin(-1 * azimuth)
@@ -318,13 +318,13 @@ class cstrafo():
         Transform a single trace or list of trace from on-sky coordinates (eR, eTheta, ePhi)
         to the vxB, vxvxB shower plane coordinate system.
         """
-        ground = self.transform_from_onsky_to_ground(positions)
+        ground = self.transform_from_onsky_to_ground(trace)
         return self.transform_to_vxB_vxvxB(ground)
 
     def transform_from_vxB_vxvxB_to_onsky(self, trace):
         """
-        Transform a single trace or list of trace from vxB, vxvxB shower plane 
+        Transform a single trace or list of trace from vxB, vxvxB shower plane
         coordinates back to on-sky coordinates (eR, eTheta, ePhi).
         """
-        ground = self.transform_from_vxB_vxvxB(positions)
+        ground = self.transform_from_vxB_vxvxB(trace)
         return self.transform_from_ground_to_onsky(ground)

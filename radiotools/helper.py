@@ -320,9 +320,29 @@ def get_normalized_angle(angle, degree=False, interval=np.deg2rad([0, 360])):
 
 
 def get_declination(magnetic_field_vector):
-    declination = np.arccos(np.dot(np.array([0, 1]), magnetic_field_vector[:2] /
-                                   np.linalg.norm(magnetic_field_vector[:2])))
-    return declination
+    """
+    Returns the declination of a vector.
+
+    The declination is measured relative to the coordinate system
+    y-axis (i.e. the second cartesian component), and positive for East,
+    negative for West. Note that this means for coordinate systems that
+    are not aligned with true North, this definition of declination
+    does not agree with most other sources.
+
+    Parameters
+    ----------
+    magnetic_field_vector : np.ndarray or list
+        Vector in cartesian coordinates
+
+    Returns
+    -------
+    declination : float
+        The declination of the vector
+
+    """
+    zenith, azimuth = cartesian_to_spherical(*magnetic_field_vector)
+
+    return np.pi/2 - azimuth
 
 
 def get_magnetic_field_vector(site=None):
@@ -350,22 +370,41 @@ def get_angle_to_magnetic_field_vector(zenith, azimuth, site=None):
 
 
 def get_magneticfield_azimuth(magnetic_field_declination):
-    return magnetic_field_declination + np.deg2rad(90)
+    """Convert a declination to a local azimuth"""
+    return np.pi/2 - magnetic_field_declination
 
 
 def get_inclination(magnetic_field_vector):
+    """
+    Returns the inclination of a vector
+
+    Parameters
+    ----------
+    magnetic_field_vector : np.ndarray or list
+        Vector in cartesian coordinates
+
+    Returns
+    -------
+    inclination : float
+        The inclination of the vector
+    """
     zenith, azimuth = cartesian_to_spherical(*magnetic_field_vector)
     return np.deg2rad(90) - zenith
 
 
 def get_magneticfield_zenith(magnetic_field_inclination):
-    if (magnetic_field_inclination < 0):
-        return magnetic_field_inclination + np.deg2rad(90)
-    else:
-        return np.deg2rad(90) - magnetic_field_inclination
-
+    """
+    Convert an inclination to a local zenith
+    """
+    return np.pi/2 - magnetic_field_inclination
 
 def get_magnetic_field_vector_from_inc(inclination, declination):
+    """
+    Get the magnetic field from its inclination and declination
+
+    Returns the (normalized) magnetic field direction from its
+    inclination and declination.
+    """
     return spherical_to_cartesian(get_magneticfield_zenith(inclination),
                                   get_magneticfield_azimuth(declination))
 

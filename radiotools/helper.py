@@ -342,7 +342,7 @@ def get_declination(magnetic_field_vector):
     """
     zenith, azimuth = cartesian_to_spherical(*magnetic_field_vector)
 
-    return np.pi/2 - azimuth
+    return np.pi / 2 - azimuth
 
 
 def get_magnetic_field_vector(site=None):
@@ -371,7 +371,7 @@ def get_angle_to_magnetic_field_vector(zenith, azimuth, site=None):
 
 def get_magneticfield_azimuth(magnetic_field_declination):
     """Convert a declination to a local azimuth"""
-    return np.pi/2 - magnetic_field_declination
+    return np.pi / 2 - magnetic_field_declination
 
 
 def get_inclination(magnetic_field_vector):
@@ -389,14 +389,14 @@ def get_inclination(magnetic_field_vector):
         The inclination of the vector
     """
     zenith, azimuth = cartesian_to_spherical(*magnetic_field_vector)
-    return np.deg2rad(90) - zenith
+    return np.pi / 2 - zenith
 
 
 def get_magneticfield_zenith(magnetic_field_inclination):
     """
     Convert an inclination to a local zenith
     """
-    return np.pi/2 - magnetic_field_inclination
+    return np.pi / 2 - magnetic_field_inclination
 
 def get_magnetic_field_vector_from_inc(inclination, declination):
     """

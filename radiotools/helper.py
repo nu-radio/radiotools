@@ -231,6 +231,7 @@ def spherical_to_cartesian(zenith, azimuth):
     x = sinZenith * np.cos(azimuth)
     y = sinZenith * np.sin(azimuth)
     z = np.cos(zenith)
+
     if hasattr(zenith, '__len__') and hasattr(azimuth, '__len__'):
         return np.array([x, y, z]).T
     else:
@@ -270,7 +271,7 @@ def get_angle(v1, v2):
     Returns: float or list of floats
         angle(s) between vector(s)
     """
-    
+
     if v1.ndim == 2 and v2.ndim == 2:
         arccos = np.array([
             np.dot(v1_, v2_) / (np.linalg.norm(v1_.T, axis=0) * np.linalg.norm(v2_.T, axis=0))
@@ -290,6 +291,22 @@ def get_angle(v1, v2):
         if (mask2):
             arccos = -1
     return np.arccos(arccos)
+
+
+def get_zenith(v1):
+    """
+    Calculates the zenith angle of a vector, i.e., the angle between the vector and the
+    the zenith direction (0, 0, 1).
+
+    Parameters
+    ----------
+    v1: 3d array or list of 3d arrays
+        vector(s)
+
+    Returns: float or list of floats
+        zenith angle(s)
+    """
+    return get_angle(v1, np.array([0, 0, 1]))
 
 
 def get_rotation(v1, v2):
@@ -349,12 +366,13 @@ def get_magnetic_field_vector(site=None):
     """
     get the geomagnetic field vector in Gauss. x points to geographic East and y towards geographic North
     """
-    magnetic_fields = {'auger': np.array([0.00871198, 0.19693423, 0.1413841]),
-                       'mooresbay': np.array([0.058457, -0.09042, 0.61439]),
-                       'summit': np.array([-.037467, 0.075575, -0.539887]),  # Summit station, Greenland
-                       'southpole': np.array([-0.14390398, 0.08590658, 0.52081228]),  # position of SP arianna station
-                       'lofar': np.array([0.004675, 0.186270, -0.456412])  # values from 2015
-                       }  
+    magnetic_fields = {
+        'auger': np.array([0.00871198, 0.19693423, 0.1413841]),
+        'mooresbay': np.array([0.058457, -0.09042, 0.61439]),
+        'summit': np.array([-.037467, 0.075575, -0.539887]),  # Summit station, Greenland
+        'southpole': np.array([-0.14390398, 0.08590658, 0.52081228]),  # position of SP arianna station
+        'lofar': np.array([0.004675, 0.186270, -0.456412])  # values from 2015
+    }
     if site is None:
         site = 'auger'
     return magnetic_fields[site.lower()]
@@ -920,13 +938,12 @@ def pretty_time_delta(seconds):
 
 def FC_limits(counts):
     """
-    returns the 68%CL Feldman-Cousins limits for 0 background.
-    
+    Returns the 68%CL Feldman-Cousins limits for 0 background.
+
     Parameters
     ----------
     counts: float
         the number of counts/events
-        
     Returns tuple of floats
         lower_bound, upper bound
     """
@@ -988,4 +1005,3 @@ def FC_limits(counts):
     up_interp = interp1d(count_list, upper_limits)
 
     return (low_interp(counts), up_interp(counts))
-

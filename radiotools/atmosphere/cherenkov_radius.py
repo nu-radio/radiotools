@@ -9,20 +9,20 @@ from radiotools.atmosphere import models as atm
 
 
 def get_cherenkov_radius_from_depth(zenith, depth, obs_level, n0, model=None, at=None):
-    """ Calculates the radius of the (Cherenkov) cone with an apex at a given depth along a 
-        shower axis with a given zenith angle. The open angle of the cone equals the 
+    """ Calculates the radius of the (Cherenkov) cone with an apex at a given depth along a
+        shower axis with a given zenith angle. The open angle of the cone equals the
         Cherenkov angle for a value of the refractive index at this position.
 
     Paramter:
 
     zenith : double
-        Zenith angle (in radian) under which a shower is observed 
-    
+        Zenith angle (in radian) under which a shower is observed
+
     depth : double
         Slant depth (in g/cm^2), i.e., shower maximum of the observed shower
-    
+
     obs_level : double
-        Altitude (in meter) of the plane at which the shower is observed 
+        Altitude (in meter) of the plane at which the shower is observed
 
     n0 : double
         Refractive index at sea level (!= obs_level)
@@ -45,19 +45,19 @@ def get_cherenkov_radius_from_depth(zenith, depth, obs_level, n0, model=None, at
 
 def get_cherenkov_radius_from_height(zenith, height, obs_level, n0, model):
     """ Calculates the radius of the (Cherenkov) cone with an apex at a given height above sea level on a
-        shower axis with a given zenith angle. The open angle of the cone equals the 
+        shower axis with a given zenith angle. The open angle of the cone equals the
         Cherenkov angle for a value of the refractive index at this position.
 
     Paramter:
 
     zenith : double
-        Zenith angle (in radian) under which a shower is observed 
-    
+        Zenith angle (in radian) under which a shower is observed
+
     height : double
         Height above sea level (in m) of the apex, i.e., shower maximum of the observed shower
-    
+
     obs_level : double
-        Altitude (in meter) of the plane at which the shower is observed 
+        Altitude (in meter) of the plane at which the shower is observed
 
     n0 : double
         Refractive index at sea level (!= obs_level)
@@ -76,20 +76,20 @@ def get_cherenkov_radius_from_height(zenith, height, obs_level, n0, model):
 
 
 def get_cherenkov_radius_from_distance(zenith, d, obs_level, n0, model):
-    """ Calculates the radius of the (Cherenkov) cone with an apex at a given distance from ground 
-        along the shower axis with a given zenith angle. The open angle of the cone equals the 
+    """ Calculates the radius of the (Cherenkov) cone with an apex at a given distance from ground
+        along the shower axis with a given zenith angle. The open angle of the cone equals the
         Cherenkov angle for a value of the refractive index at this position.
 
     Paramter:
 
     zenith : double
-        Zenith angle (in radian) under which a shower is observed 
-    
+        Zenith angle (in radian) under which a shower is observed
+
     d : double
         Distance from ground to the apex, i.e., shower maximum of the observed shower along the shower axis (in m)
-    
+
     obs_level : double
-        Altitude (in meter) of the plane at which the shower is observed 
+        Altitude (in meter) of the plane at which the shower is observed
 
     n0 : double
         Refractive index at sea level (!= obs_level)
@@ -107,14 +107,14 @@ def get_cherenkov_radius_from_distance(zenith, d, obs_level, n0, model):
 
 
 def get_cherenkov_angle(height, n0, model):
-    """ Return cherenkov angle for given height above sea level, 
-        refractive index at sea level and atmospheric model. 
+    """ Return cherenkov angle for given height above sea level,
+        refractive index at sea level and atmospheric model.
 
     Paramter:
 
     height : double
         Height above sea level (in m)
-    
+
     n0 : double
         Refractive index at sea level (!= obs_level)
 
@@ -156,7 +156,7 @@ def cherenkov_radius(angle, d):
 
     Returns
     -------
-    
+
     radius : double
         (Cherenkov) radius
 

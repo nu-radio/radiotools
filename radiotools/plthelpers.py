@@ -496,7 +496,7 @@ def get_histogram2d(x=None, y=None, z=None,
     """
 
     if z is None and (x is None or y is None):
-        sys.exit("z and (x or y) are all None")
+        raise ValueError("z and (x or y) are all None")
 
     if ax1 is None:
         fig, ax = plt.subplots(1)
@@ -520,7 +520,7 @@ def get_histogram2d(x=None, y=None, z=None,
         elif normed == "row1":
             z = z / np.amax(z, axis=1)[:, None]
         else:
-            sys.exit("Normalisation %s is not known.")
+            raise ValueError(f"Normalisation {normed} is not known.")
 
     color_norm = mcolors.LogNorm() if cscale == "log" else None
     vmin, vmax = clim

@@ -613,8 +613,7 @@ class Atmosphere():
                 tmp2 = -1. / 16. * st ** 2 * (ct ** 4 - 14 * ct ** 2 + 21) * (h / r_e) ** 5 / ct ** 11
                 dldh += tmp2
         else:
-            logger.error("height index our of bounds")
-            sys.exit(-1)
+            raise ValueError("height index our of bounds")
 
         return dldh
 

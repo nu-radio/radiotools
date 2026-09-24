@@ -32,7 +32,7 @@ def calculate_energy_fluence_vector(traces, times, signal_window=100., remove_no
     """
 
     if traces.ndim != 2 and traces.ndim != 3 and traces.ndim != times.ndim:
-        sys.exit("Error: traces does not fullfil reqiuerments")
+        raise ValueError("Error: traces does not fullfil requirements")
 
     # if traces for only on antenna is given (dim = 2) a dummy dimension is added
     if traces.ndim == 2:

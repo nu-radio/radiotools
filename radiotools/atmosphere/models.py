@@ -564,11 +564,11 @@ class Atmosphere():
         b = self.b
         c = self.c
         h = self.h
-        a[0] = self._get_atmosphere_numeric([zenith], h_low=h[0]) - b[0] * self._get_dldh(h[0], zenith, 0)
-        a[1] = self._get_atmosphere_numeric([zenith], h_low=h[1]) - b[1] * np.exp(-h[1] / c[1]) * self._get_dldh(h[1], zenith, 1)
-        a[2] = self._get_atmosphere_numeric([zenith], h_low=h[2]) - b[2] * np.exp(-h[2] / c[2]) * self._get_dldh(h[2], zenith, 2)
-        a[3] = self._get_atmosphere_numeric([zenith], h_low=h[3]) - b[3] * np.exp(-h[3] / c[3]) * self._get_dldh(h[3], zenith, 3)
-        a[4] = self._get_atmosphere_numeric([zenith], h_low=h[4]) + b[4] * h[4] / c[4] * self._get_dldh(h[4], zenith, 4)
+        a[0] = self._get_atmosphere_numeric(zenith, h_low=h[0])[0] - b[0] * self._get_dldh(h[0], zenith, 0)
+        a[1] = self._get_atmosphere_numeric(zenith, h_low=h[1])[0] - b[1] * np.exp(-h[1] / c[1]) * self._get_dldh(h[1], zenith, 1)
+        a[2] = self._get_atmosphere_numeric(zenith, h_low=h[2])[0] - b[2] * np.exp(-h[2] / c[2]) * self._get_dldh(h[2], zenith, 2)
+        a[3] = self._get_atmosphere_numeric(zenith, h_low=h[3])[0] - b[3] * np.exp(-h[3] / c[3]) * self._get_dldh(h[3], zenith, 3)
+        a[4] = self._get_atmosphere_numeric(zenith, h_low=h[4])[0] + b[4] * h[4] / c[4] * self._get_dldh(h[4], zenith, 4)
         return a
 
 

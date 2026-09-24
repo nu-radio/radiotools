@@ -479,6 +479,7 @@ class Atmosphere():
             # array(height, n)
             self.n_h = add_refractive_index_profile(gdas_file)
 
+        self.a = None
         self.b = atm_models[model]['b']
         self.c = atm_models[model]['c']
         hh = atm_models[model]['h']
@@ -501,19 +502,19 @@ class Atmosphere():
                     self.a = fin["a"]
 
                 if(len(self.a) != self.number_of_zeniths):
+                    logger.warning("constants outdated, will calculate new constants...")
                     os.remove(filename)
-                    logger.warning("constants outdated, please rerun to calculate new constants")
-                    sys.exit(0)
+                    self.a = None
 
-                zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
-                mask = zeniths < np.deg2rad(90)
-                self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in range(5)]
-
-            else:
+            if self.a is None: # no file found / old file was outdated.
                 self.a = self.__calculate_a()
                 np.savez(filename, a=self.a)
-                logger.warning("all constants calculated, exiting now... please rerun your analysis")
-                sys.exit(0)
+                logger.warning(f"all constants calculated and exported to {filename}")
+
+            zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
+            mask = zeniths < np.deg2rad(90)
+            self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in range(5)]
+
 
 
     def get_n(self, h):

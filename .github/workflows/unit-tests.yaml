@@ -21,6 +21,7 @@ jobs:
   unit-tests:
     name: Unit tests
     runs-on: ${{ inputs.os || 'ubuntu-latest' }}
+
     steps:
     - name: checkout
       uses: actions/checkout@v6
@@ -37,13 +38,13 @@ jobs:
 
     - name: Test atmosphere
       run: |
-        python tests/test_atmosphere.py
+        python tests/tests_atmosphere.py
 
     - name: Test coordinatesystems
       run: |
-        python tests/test_coordinatesystems.py
+        python tests/tests_coordinatesystems.py
 
     - name: Test refractivity
       run: |
-        python tests/test_refractivity.py
+        python tests/tests_refractivity.py
 

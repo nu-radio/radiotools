@@ -1,0 +1,50 @@
+name: Unit tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: Specify Python version to run tests on
+        type: string
+        required: true
+        default: '3.10'
+      os:
+        description: OS to run tests on
+        type: string
+        default: ubuntu-latest
+
+env: # set the python_version to 3.10 if the workflow is not triggered by workflow_call or workflow_dispatch
+  PYTHON_VERSION: ${{ inputs.python_version || '3.10' }}
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ${{ inputs.os || 'ubuntu-latest' }}
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+
+    - name: Set up Python [${{ env.PYTHON_VERSION }}]
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install radiotools
+      run: |
+        pip install -e .
+
+    - name: Test atmosphere
+      run: |
+        python tests/tests_atmosphere.py
+
+    - name: Test coordinatesystems
+      run: |
+        python tests/tests_coordinatesystems.py
+
+    - name: Test refractivity
+      run: |
+        python tests/tests_refractivity.py
+

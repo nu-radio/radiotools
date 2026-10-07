@@ -479,6 +479,7 @@ class Atmosphere():
             # array(height, n)
             self.n_h = add_refractive_index_profile(gdas_file)
 
+        self.a = None
         self.b = atm_models[model]['b']
         self.c = atm_models[model]['c']
         hh = atm_models[model]['h']
@@ -501,19 +502,19 @@ class Atmosphere():
                     self.a = fin["a"]
 
                 if(len(self.a) != self.number_of_zeniths):
+                    logger.warning("constants outdated, will calculate new constants...")
                     os.remove(filename)
-                    logger.warning("constants outdated, please rerun to calculate new constants")
-                    sys.exit(0)
+                    self.a = None
 
-                zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
-                mask = zeniths < np.deg2rad(90)
-                self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in range(5)]
-
-            else:
+            if self.a is None: # no file found / old file was outdated.
                 self.a = self.__calculate_a()
                 np.savez(filename, a=self.a)
-                logger.warning("all constants calculated, exiting now... please rerun your analysis")
-                sys.exit(0)
+                logger.warning(f"all constants calculated and exported to {filename}")
+
+            zeniths = np.arccos(np.linspace(0, 1, self.number_of_zeniths))
+            mask = zeniths < np.deg2rad(90)
+            self.a_funcs = [interpolate.interp1d(zeniths[mask], self.a[..., i][mask], kind='cubic') for i in range(5)]
+
 
 
     def get_n(self, h):
@@ -563,11 +564,11 @@ class Atmosphere():
         b = self.b
         c = self.c
         h = self.h
-        a[0] = self._get_atmosphere_numeric([zenith], h_low=h[0]) - b[0] * self._get_dldh(h[0], zenith, 0)
-        a[1] = self._get_atmosphere_numeric([zenith], h_low=h[1]) - b[1] * np.exp(-h[1] / c[1]) * self._get_dldh(h[1], zenith, 1)
-        a[2] = self._get_atmosphere_numeric([zenith], h_low=h[2]) - b[2] * np.exp(-h[2] / c[2]) * self._get_dldh(h[2], zenith, 2)
-        a[3] = self._get_atmosphere_numeric([zenith], h_low=h[3]) - b[3] * np.exp(-h[3] / c[3]) * self._get_dldh(h[3], zenith, 3)
-        a[4] = self._get_atmosphere_numeric([zenith], h_low=h[4]) + b[4] * h[4] / c[4] * self._get_dldh(h[4], zenith, 4)
+        a[0] = self._get_atmosphere_numeric(zenith, h_low=h[0])[0] - b[0] * self._get_dldh(h[0], zenith, 0)
+        a[1] = self._get_atmosphere_numeric(zenith, h_low=h[1])[0] - b[1] * np.exp(-h[1] / c[1]) * self._get_dldh(h[1], zenith, 1)
+        a[2] = self._get_atmosphere_numeric(zenith, h_low=h[2])[0] - b[2] * np.exp(-h[2] / c[2]) * self._get_dldh(h[2], zenith, 2)
+        a[3] = self._get_atmosphere_numeric(zenith, h_low=h[3])[0] - b[3] * np.exp(-h[3] / c[3]) * self._get_dldh(h[3], zenith, 3)
+        a[4] = self._get_atmosphere_numeric(zenith, h_low=h[4])[0] + b[4] * h[4] / c[4] * self._get_dldh(h[4], zenith, 4)
         return a
 
 
@@ -612,8 +613,7 @@ class Atmosphere():
                 tmp2 = -1. / 16. * st ** 2 * (ct ** 4 - 14 * ct ** 2 + 21) * (h / r_e) ** 5 / ct ** 11
                 dldh += tmp2
         else:
-            logger.error("height index our of bounds")
-            sys.exit(-1)
+            raise ValueError("height index our of bounds")
 
         return dldh
 

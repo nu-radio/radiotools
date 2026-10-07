@@ -77,7 +77,7 @@ def get_refractivity_between_two_points_numerical(p1, p2, atm_model=None, refrac
         logger.setLevel(logging.DEBUG)
 
     if table is None and (atm_model is None and refractivity_at_sea_level is None):
-        sys.exit("Invalid arguments. You have to specify table or atm_model and refractivity_at_sea_level.")
+        raise ValueError("Invalid arguments. You have to specify table or atm_model and refractivity_at_sea_level.")
 
     line = p1 - p2
     max_dist = np.linalg.norm(line)
@@ -191,7 +191,7 @@ class RefractivityTable(object):
             # just take the "layer" closet value to 0 (sea level) if its within 1m. This is stupid but should accurate enought.
             null = np.argmin(np.abs(self._heights))
             if np.abs(self._heights[null]) > 1:
-                sys.exit("Could not find refractive index at sea level in gdas profile. stop...")
+                raise ValueError("Could not find refractive index at sea level in gdas profile. stop...")
 
             self._refractivity_at_sea_level = self._refractivity_table[null]
 
@@ -305,7 +305,7 @@ class RefractivityTable(object):
         Takes clostest zenith angle from table to calculated the refractivity.
         """
         if not self._curved:
-            sys.exit("Table not available: please specifiy \"curved=True\"")
+            raise ValueError("Table not available: please specifiy \"curved=True\"")
 
         # next zenith bin. checks if zenith is in or out of range
         zenith_idx = self.get_zenith_bin(zenith)
@@ -348,7 +348,7 @@ class RefractivityTable(object):
         otherwise the clostest zenith angle bin is used for the calculation.
         """
         if not self._curved:
-            sys.exit("Table not available: please specifiy \"curved=True\"")
+            raise ValueError("Table not available: please specifiy \"curved=True\"")
 
         if not self._interpolate_zenith:
             return self._get_integrated_refractivity_for_distance(d, zenith)

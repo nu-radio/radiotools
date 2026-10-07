@@ -158,7 +158,7 @@ class cstrafo():
 
         _, nY = positions.shape
         if(nY != 3):
-            sys.exit("Illegal position given")
+            raise ValueError("Illegal position given")
         else:
             result = []
             for pos in positions:
@@ -185,7 +185,7 @@ class cstrafo():
 
         _, nY = positions.shape
         if(nY != 3):
-            sys.exit("Illeal position given")
+            raise ValueError("Illegal position given")
         else:
             result = []
             for pos in positions:

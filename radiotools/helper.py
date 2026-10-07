@@ -223,7 +223,7 @@ def get_zenith_angle_at_sea_level(zenith, observer_level):
 
         return local_zenith, distance
     else:
-        sys.exit("Find theta at earth: Not 2 intersections")
+        raise ValueError("Find theta at earth: Not 2 intersections")
 
 
 def spherical_to_cartesian(zenith, azimuth):

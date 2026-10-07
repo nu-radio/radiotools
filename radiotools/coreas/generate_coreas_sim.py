@@ -252,13 +252,13 @@ def write_list_star_pattern(filename, zenith, azimuth,
 
     # errors that catch when input is in wrong unit
     if obs_level > 10000:
-        sys.exit(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
+        raise ValueError(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
     
     if np.abs(zenith) > 7:
-        sys.exit("Zenith angle likely given in degrees: {zenith}. Must be given in radians!")
+        raise ValueError(f"Zenith angle likely given in degrees: {zenith}. Must be given in radians!")
 
     if np.abs(inclination) > 7:
-        sys.exit("Magnetic field inclination angle likely given in degrees: {inclination}. Must be given in radians!")
+        raise ValueError(f"Magnetic field inclination angle likely given in degrees: {inclination}. Must be given in radians!")
 
     # make empty .list file if already existent
     if not append or not os.path.exists(filename):
@@ -300,7 +300,7 @@ def write_list_star_pattern(filename, zenith, azimuth,
           print(f"azimuth: {corsika_azimuth} degrees - in Corsika convention")
 
     else:  # dealing with wrong input choices:
-        sys.exit("Invalid input. Possible options for Auger_CS are 'True' or 'False'. \n Quitting...")
+        raise ValueError("Invalid input. Possible options for Auger_CS are 'True' or 'False'. \n Quitting...")
 
 
     print("These are the angles that should be in the Corsika input file!!!")
@@ -471,14 +471,14 @@ def get_starshaped_pattern_radii(zenith, obs_level, n0=1.000292, at=None, atm_mo
 
     # errors that catch when input is in wrong unit
     if obs_level > 10000:
-            sys.exit(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
+            raise ValueError(f"Observation level likely given in cm: {obs_level}. Must be given in meters!")
     
     if zenith > 7:
-            sys.exit("Zenith angle likely given in degrees. Must be given in radians!")
+            raise ValueError("Zenith angle likely given in degrees. Must be given in radians!")
 
     if at is None:
         if atm_model is None:
-            sys.exit("No proper arguments for get_starshaped_pattern_radii")
+            raise ValueError("No proper arguments for get_starshaped_pattern_radii")
 
         at = models.Atmosphere(atm_model)
 
